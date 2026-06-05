@@ -355,6 +355,12 @@ export const SLASH_COMMANDS: readonly SlashCommandSpec[] = [
   },
 
   {
+    cmd: "reload",
+    group: "advanced",
+    argsHint: "[config|skills|mcp]",
+    summary: "detect and hot-reload config / skills / MCP changes",
+  },
+  {
     cmd: "budget",
     group: "advanced",
     argsHint: "[usd|off]",
