@@ -601,6 +601,11 @@ export function writeConfig(cfg: ReasonixConfig, path: string = defaultConfigPat
   _configCache.delete(path);
 }
 
+/** Force readConfig to bypass its mtime cache and re-read from disk. */
+export function clearConfigCache(path: string = defaultConfigPath()): void {
+  _configCache.delete(path);
+}
+
 /** Resolve the language from config file. */
 export function loadLanguage(path: string = defaultConfigPath()): LanguageCode | undefined {
   return readConfig(path).lang;
