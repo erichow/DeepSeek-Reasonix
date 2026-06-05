@@ -441,6 +441,19 @@ export class CacheFirstLoop {
     this._budgetWarned = false;
   }
 
+  /** Rebuild and replace the system prompt via the _rebuildSystem callback.
+   *  Unlike clearLog() this does NOT archive the session or drop conversation history.
+   *  May cause a prefix-cache miss on the next API call — caller should accept that cost.
+   *  Returns true if the content actually changed. */
+  rebuildSystemPrompt(): boolean {
+    if (!this._rebuildSystem) return false;
+    try {
+      return this.prefix.replaceSystem(this._rebuildSystem());
+    } catch {
+      return false;
+    }
+  }
+
   /** UI surface — model id of the call about to run (or running) right now. */
   get currentCallModel(): string {
     return this.model;
