@@ -1593,6 +1593,8 @@ export const zhCN: TranslationSchema = {
     modeReview: "审查",
     pro: "⇧ 专业",
     budget: "  预算  ",
+    noThink: "不思考",
+    thinking: "思考中",
   },
   welcomeBanner: {
     workspace: "▸ 工作区",

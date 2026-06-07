@@ -675,6 +675,8 @@ export interface TranslationSchema {
     modeReview: string;
     pro: string;
     budget: string;
+    noThink: string;
+    thinking: string;
   };
   welcomeBanner: {
     workspace: string;

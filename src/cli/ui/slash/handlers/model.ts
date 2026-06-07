@@ -48,6 +48,7 @@ const effort: SlashHandler = (args, loop, ctx) => {
   }
   const next: ReasoningEffort = raw;
   loop.configure({ reasoningEffort: next });
+  ctx.dispatch?.({ type: "session.effort.change", reasoningEffort: next });
   try {
     saveReasoningEffort(next, ctx.configPath);
   } catch {
@@ -135,9 +136,7 @@ const thinking: SlashHandler = (args, loop, ctx) => {
   const raw = (args[0] ?? "").toLowerCase();
   if (raw === "") {
     const status =
-      loop.thinkingOverride === undefined
-        ? "auto (model-default)"
-        : loop.thinkingOverride;
+      loop.thinkingOverride === undefined ? "auto (model-default)" : loop.thinkingOverride;
     return { info: t("handlers.model.thinkingStatus", { status }) };
   }
   const isOn = raw === "on" || raw === "true" || raw === "1";

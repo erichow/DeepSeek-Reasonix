@@ -1692,6 +1692,8 @@ export const EN: TranslationSchema = {
     modeReview: "review",
     pro: "\u21e7 pro",
     budget: "  budget  ",
+    noThink: "nothinking",
+    thinking: "thinking",
   },
   welcomeBanner: {
     workspace: "\u25b8 workspace",

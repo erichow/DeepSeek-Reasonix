@@ -4516,7 +4516,7 @@ function AppInner({
                           ? t("statsPanel.modeReview")
                           : editMode
                   }
-                  model={`${sessionModel} \u00b7 ${sessionEffort ?? loop.reasoningEffort}`}
+                  model={`${sessionModel}${loop.thinkingOverride === "disabled" ? ` \u00b7 ${t("statsPanel.noThink")}` : ` \u00b7 ${sessionEffort ?? loop.reasoningEffort}`}`}
                   input={input}
                   setInput={setInput}
                   busy={busy}
@@ -4823,7 +4823,7 @@ function AppInner({
                           ? t("statsPanel.modeReview")
                           : editMode
                   }
-                  model={`${sessionModel} \u00b7 ${sessionEffort ?? loop.reasoningEffort}`}
+                  model={`${sessionModel}${loop.thinkingOverride === "disabled" ? ` \u00b7 ${t("statsPanel.noThink")}` : ` \u00b7 ${sessionEffort ?? loop.reasoningEffort}`}`}
                   input={input}
                   setInput={setInput}
                   busy={busy}

@@ -27,7 +27,17 @@ export interface StreamModelResult {
 export async function* streamModelResponse(
   opts: StreamModelOptions,
 ): AsyncGenerator<LoopEvent, StreamModelResult, void> {
-  const { client, model, messages, toolSpecs, signal, reasoningEffort, thinkingOverride, maxTokens, turn } = opts;
+  const {
+    client,
+    model,
+    messages,
+    toolSpecs,
+    signal,
+    reasoningEffort,
+    thinkingOverride,
+    maxTokens,
+    turn,
+  } = opts;
   let assistantContent = "";
   let reasoningContent = "";
   let usage: Usage | null = null;
