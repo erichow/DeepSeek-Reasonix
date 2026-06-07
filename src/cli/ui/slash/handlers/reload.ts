@@ -38,9 +38,11 @@ const reload: SlashHandler = (args, loop, ctx) => {
     hasAny: false,
   };
   filteredChanges.hasAny =
-    (filteredChanges.config === "changed" || filteredChanges.config === "new") ||
+    filteredChanges.config === "changed" ||
+    filteredChanges.config === "new" ||
     filteredChanges.skills.length > 0 ||
-    (filteredChanges.mcp === "changed" || filteredChanges.mcp === "new");
+    filteredChanges.mcp === "changed" ||
+    filteredChanges.mcp === "new";
 
   // Apply changes via ReloadManager (handles config + skills + snapshot)
   const report = manager.applyChanges(filteredChanges, {
@@ -97,7 +99,7 @@ const reload: SlashHandler = (args, loop, ctx) => {
     }
   }
 
-  return { info: [`✓ 重载完成`, ...lines].join("\n") };
+  return { info: ["✓ 重载完成", ...lines].join("\n") };
 };
 
 export const handlers: Record<string, SlashHandler> = { reload };

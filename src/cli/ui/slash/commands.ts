@@ -59,6 +59,12 @@ export const SLASH_COMMANDS: readonly SlashCommandSpec[] = [
       "fold older turns into a summary message (cache-safe). Auto-fires at 50% ctx; this is the manual trigger.",
   },
   {
+    cmd: "ai-filter-officer",
+    argsHint: "[confirm]",
+    group: "chat",
+    summary: "AI 筛选会话上下文，移除过时信息释放 tokens。加 confirm 执行降噪。",
+  },
+  {
     cmd: "stop",
     group: "chat",
     summary: "abort the current model turn (typed alternative to Esc)",

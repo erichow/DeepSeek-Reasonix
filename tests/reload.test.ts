@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ReloadManager } from "../src/reload/manager.js";
 
 /** Create a temporary project directory with a basic config.json. */
@@ -32,7 +32,12 @@ function makeContext(projectRoot: string, configPath: string) {
       setBudget: () => {},
       rebuildSystemPrompt: () => {},
     },
-    mcpReload: async () => ({ added: [] as string[], removed: [] as string[], failed: [] as Array<{ spec: string; reason: string }>, summaries: [] as unknown[] }),
+    mcpReload: async () => ({
+      added: [] as string[],
+      removed: [] as string[],
+      failed: [] as Array<{ spec: string; reason: string }>,
+      summaries: [] as unknown[],
+    }),
     skillStore: { list: () => [] as Array<{ name: string; scope: string; path: string }> },
     configPath,
     projectRoot,
@@ -128,7 +133,11 @@ describe("ReloadManager detectChanges", () => {
       // Create a project .reasonix/skills/ directory with a skill
       const skillsDir = join(root, ".reasonix", "skills");
       mkdirSync(skillsDir, { recursive: true });
-      writeFileSync(join(skillsDir, "my-skill.md"), "---\nname: my-skill\ndescription: My test skill\n---\n\nBody", "utf8");
+      writeFileSync(
+        join(skillsDir, "my-skill.md"),
+        "---\nname: my-skill\ndescription: My test skill\n---\n\nBody",
+        "utf8",
+      );
 
       const mgr = new ReloadManager({ projectRoot: root, configPath });
       mgr.setSnapshotPath(snapPath);
@@ -138,7 +147,11 @@ describe("ReloadManager detectChanges", () => {
       mgr.applyChanges(first, makeContext(root, configPath));
 
       // Add a new skill
-      writeFileSync(join(skillsDir, "another-skill.md"), "---\nname: another-skill\ndescription: Another\n---\n\nBody", "utf8");
+      writeFileSync(
+        join(skillsDir, "another-skill.md"),
+        "---\nname: another-skill\ndescription: Another\n---\n\nBody",
+        "utf8",
+      );
 
       // Second detection
       const second = mgr.detectChanges();
@@ -155,7 +168,11 @@ describe("ReloadManager detectChanges", () => {
       const skillsDir = join(root, ".reasonix", "skills");
       mkdirSync(skillsDir, { recursive: true });
       const skillFile = join(skillsDir, "to-delete.md");
-      writeFileSync(skillFile, "---\nname: to-delete\ndescription: Will delete\n---\n\nBody", "utf8");
+      writeFileSync(
+        skillFile,
+        "---\nname: to-delete\ndescription: Will delete\n---\n\nBody",
+        "utf8",
+      );
 
       const mgr = new ReloadManager({ projectRoot: root, configPath });
       mgr.setSnapshotPath(snapPath);
@@ -181,7 +198,11 @@ describe("ReloadManager updateSnapshot", () => {
     try {
       const skillsDir = join(root, ".reasonix", "skills");
       mkdirSync(skillsDir, { recursive: true });
-      writeFileSync(join(skillsDir, "test-skill.md"), "---\nname: test-skill\ndescription: Test\n---\n\nBody", "utf8");
+      writeFileSync(
+        join(skillsDir, "test-skill.md"),
+        "---\nname: test-skill\ndescription: Test\n---\n\nBody",
+        "utf8",
+      );
 
       const mgr = new ReloadManager({ projectRoot: root, configPath });
       mgr.setSnapshotPath(snapPath);

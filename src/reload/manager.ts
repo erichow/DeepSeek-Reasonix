@@ -1,16 +1,24 @@
 import { createHash, randomBytes } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { homedir } from "node:os";
-import { readConfig, clearConfigCache, normalizeMcpConfig } from "../config.js";
+import { dirname, join, resolve } from "node:path";
+import { clearConfigCache, normalizeMcpConfig, readConfig } from "../config.js";
 import type {
-  Snapshot,
-  SkillSnapshotEntry,
-  ItemChange,
-  Changes,
   ApplyResult,
-  ReloadReport,
+  Changes,
+  ItemChange,
   ReloadContext,
+  ReloadReport,
+  SkillSnapshotEntry,
+  Snapshot,
 } from "./types.js";
 
 /** Default snapshot path inside project .reasonix/ */
@@ -134,11 +142,13 @@ export class ReloadManager {
   private readonly configPath: string;
   private snapPath: string;
 
-  constructor(opts: {
-    projectRoot?: string;
-    homeDir?: string;
-    configPath?: string;
-  } = {}) {
+  constructor(
+    opts: {
+      projectRoot?: string;
+      homeDir?: string;
+      configPath?: string;
+    } = {},
+  ) {
     this.projectRoot = opts.projectRoot ?? process.cwd();
     this.homeDir = opts.homeDir ?? homedir();
     this.configPath = opts.configPath ?? join(this.homeDir, ".reasonix", "config.json");
@@ -189,7 +199,11 @@ export class ReloadManager {
         skillsChanges.push({ kind: "new", name: cs.name, detail: `新增技能 (${cs.scope})` });
       } else if (cs.mtime !== prev.mtime) {
         if (cs.hash !== prev.hash) {
-          skillsChanges.push({ kind: "changed", name: cs.name, detail: `内容已变更 (${cs.scope})` });
+          skillsChanges.push({
+            kind: "changed",
+            name: cs.name,
+            detail: `内容已变更 (${cs.scope})`,
+          });
         }
         // hash matches → just touch
       }
