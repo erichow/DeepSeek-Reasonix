@@ -4618,6 +4618,7 @@ function AppInner({
                 <SessionPicker
                   sessions={sessionsPickerList}
                   workspace={currentRootDir}
+                  activeSessionName={session}
                   walletCurrency={walletCurrencyRef.current}
                   pickerPorts={pickerPorts}
                   onFocusChange={setSessionsPickerFocus}

@@ -1,9 +1,11 @@
 import {
   type ReasoningEffort,
+  type ThinkingOverride,
   isReasoningEffort,
   saveMaxOutputTokens,
   saveModel,
   saveReasoningEffort,
+  saveThinkingOverride,
 } from "@/config.js";
 import { t } from "@/i18n/index.js";
 import { effortChoicesForBaseUrl } from "../../effort-choices.js";
@@ -129,9 +131,34 @@ const maxTokens: SlashHandler = (args, loop, ctx) => {
   return { info: t("handlers.model.maxTokensSet", { n }) };
 };
 
+const thinking: SlashHandler = (args, loop, ctx) => {
+  const raw = (args[0] ?? "").toLowerCase();
+  if (raw === "") {
+    const status =
+      loop.thinkingOverride === undefined
+        ? "auto (model-default)"
+        : loop.thinkingOverride;
+    return { info: t("handlers.model.thinkingStatus", { status }) };
+  }
+  const isOn = raw === "on" || raw === "true" || raw === "1";
+  const isOff = raw === "off" || raw === "false" || raw === "0";
+  if (!isOn && !isOff) {
+    return { info: t("handlers.model.thinkingUsage") };
+  }
+  const next: ThinkingOverride = isOn ? "enabled" : "disabled";
+  loop.configure({ thinkingOverride: next });
+  try {
+    saveThinkingOverride(next, ctx.configPath);
+  } catch {
+    /* disk full / perms — runtime change still took effect */
+  }
+  return { info: t("handlers.model.thinkingSet", { value: next }) };
+};
+
 export const handlers: Record<string, SlashHandler> = {
   model,
   effort,
   budget,
   "max-tokens": maxTokens,
+  thinking,
 };

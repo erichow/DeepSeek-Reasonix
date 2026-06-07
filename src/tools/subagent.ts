@@ -66,6 +66,8 @@ export interface SpawnSubagentOptions {
   allowedTools?: readonly string[];
   /** Continue an earlier session instead of starting fresh — loads the prior messages from disk; `task` is treated as a continuation nudge. */
   resumeSession?: string;
+  /** Propagate parent's thinkingOverride so /thinking off also silences subagent reasoning. */
+  thinkingOverride?: "enabled" | "disabled";
 }
 
 export interface SubagentResult {
@@ -215,6 +217,7 @@ export async function spawnSubagent(opts: SpawnSubagentOptions): Promise<Subagen
     // task is already narrow by construction, and `high` cuts output
     // tokens substantially vs `max`.
     reasoningEffort: DEFAULT_SUBAGENT_EFFORT,
+    thinkingOverride: opts.thinkingOverride,
     hooks: [],
     stream: true,
     session: sessionName,

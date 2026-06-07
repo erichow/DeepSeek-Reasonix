@@ -1384,6 +1384,20 @@ export function saveTheme(theme: ThemeName | "auto", path: string = defaultConfi
   writeConfig(cfg, path);
 }
 
+/** `undefined` = auto-detect by model name (existing behavior). */
+export type ThinkingOverride = "enabled" | "disabled";
+
+export function loadThinkingOverride(path: string = defaultConfigPath()): ThinkingOverride | undefined {
+  const v = readConfig(path).thinkingOverride;
+  return v === "enabled" || v === "disabled" ? v : undefined;
+}
+
+export function saveThinkingOverride(value: ThinkingOverride, path: string = defaultConfigPath()): void {
+  const cfg = readConfig(path);
+  cfg.thinkingOverride = value;
+  writeConfig(cfg, path);
+}
+
 /** Persist the reasoning_effort cap so `/effort high` survives a relaunch. */
 export function saveReasoningEffort(
   effort: ReasoningEffort,

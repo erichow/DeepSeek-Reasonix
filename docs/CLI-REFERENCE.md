@@ -94,7 +94,7 @@ Type `/` mid-chat to open the picker. Aliases shown in parentheses. Code-mode-on
 
 | Command | What it does |
 |---|---|
-| `/sessions` | List saved sessions (current marked with ▸) |
+| `/sessions` | List saved sessions · open / delete / rename |
 
 ### Code mode
 

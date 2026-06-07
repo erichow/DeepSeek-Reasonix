@@ -12,6 +12,7 @@ export interface StreamModelOptions {
   toolSpecs: readonly ToolSpec[];
   signal: AbortSignal;
   reasoningEffort: ReasoningEffort;
+  thinkingOverride?: "enabled" | "disabled";
   maxTokens?: number;
   turn: number;
 }
@@ -26,7 +27,7 @@ export interface StreamModelResult {
 export async function* streamModelResponse(
   opts: StreamModelOptions,
 ): AsyncGenerator<LoopEvent, StreamModelResult, void> {
-  const { client, model, messages, toolSpecs, signal, reasoningEffort, maxTokens, turn } = opts;
+  const { client, model, messages, toolSpecs, signal, reasoningEffort, thinkingOverride, maxTokens, turn } = opts;
   let assistantContent = "";
   let reasoningContent = "";
   let usage: Usage | null = null;
@@ -38,7 +39,7 @@ export async function* streamModelResponse(
     messages,
     tools: toolSpecs.length ? toolSpecs : undefined,
     signal,
-    thinking: thinkingModeForModel(model),
+    thinking: thinkingOverride ?? thinkingModeForModel(model),
     reasoningEffort,
     maxTokens,
   })) {

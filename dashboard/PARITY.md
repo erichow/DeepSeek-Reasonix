@@ -67,7 +67,7 @@ into one row.
 
 | Slash | Purpose | Coverage |
 |---|---|---|
-| `/sessions` | list saved sessions | **panel** · SessionPicker modal (C-2 #423) |
+| `/sessions` | list saved sessions · open / delete / rename | **panel** · SessionPicker modal (C-2 #423) |
 | `/resume` | open a session | **panel** · same picker |
 | `/rename` | rename current session | chat-box |
 | `/forget` | delete current session | chat-box |

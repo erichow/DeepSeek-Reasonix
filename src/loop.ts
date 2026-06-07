@@ -100,6 +100,8 @@ export interface CacheFirstLoopOptions {
   model?: string;
   stream?: boolean;
   reasoningEffort?: ReasoningEffort;
+  /** Extra_body.thinking.type override — undefined = auto (derived from model name). */
+  thinkingOverride?: "enabled" | "disabled";
   /** Per-turn output token cap passed as `max_tokens`. Undefined = no cap (server default). */
   maxOutputTokens?: number;
   /** Soft USD cap — warns at 80%, refuses next turn at 100%. Opt-in (default no cap). */
@@ -122,6 +124,8 @@ export interface ReconfigurableOptions {
   stream?: boolean;
   /** V4 thinking mode only; deepseek-chat ignores. */
   reasoningEffort?: ReasoningEffort;
+  /** Override extra_body.thinking.type; undefined = auto. */
+  thinkingOverride?: "enabled" | "disabled";
   /** Per-turn output token cap. Pass null to clear. */
   maxOutputTokens?: number | null;
 }
@@ -158,6 +162,7 @@ export class CacheFirstLoop {
   model: string;
   stream: boolean;
   reasoningEffort: ReasoningEffort;
+  thinkingOverride?: "enabled" | "disabled";
   maxOutputTokens: number | undefined;
   budgetUsd: number | null;
   /** Maximum tool-call iterations per turn. Config > env > default (50). */
@@ -230,6 +235,7 @@ export class CacheFirstLoop {
     });
     this.model = opts.model ?? "deepseek-v4-flash";
     this.reasoningEffort = opts.reasoningEffort ?? "high";
+    this.thinkingOverride = opts.thinkingOverride;
     this.maxOutputTokens = opts.maxOutputTokens;
     this.budgetUsd =
       typeof opts.budgetUsd === "number" && opts.budgetUsd > 0 ? opts.budgetUsd : null;
@@ -430,6 +436,7 @@ export class CacheFirstLoop {
       this.stream = opts.stream;
     }
     if (opts.reasoningEffort !== undefined) this.reasoningEffort = opts.reasoningEffort;
+    if (opts.thinkingOverride !== undefined) this.thinkingOverride = opts.thinkingOverride;
     if (opts.maxOutputTokens !== undefined) {
       this.maxOutputTokens = opts.maxOutputTokens ?? undefined;
     }
@@ -902,6 +909,7 @@ export class CacheFirstLoop {
             toolSpecs,
             signal,
             reasoningEffort: this.reasoningEffort,
+            thinkingOverride: this.thinkingOverride,
             maxTokens: this.maxOutputTokens,
             turn: this._turn,
           });
@@ -915,7 +923,7 @@ export class CacheFirstLoop {
             messages,
             tools: toolSpecs.length ? toolSpecs : undefined,
             signal,
-            thinking: thinkingModeForModel(callModel),
+            thinking: this.thinkingOverride ?? thinkingModeForModel(callModel),
             reasoningEffort: this.reasoningEffort,
             maxTokens: this.maxOutputTokens,
           });

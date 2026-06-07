@@ -60,9 +60,9 @@ export const SLASH_COMMANDS: readonly SlashCommandSpec[] = [
   },
   {
     cmd: "ai-filter-officer",
-    argsHint: "[confirm]",
+    argsHint: "",
     group: "chat",
-    summary: "AI 筛选会话上下文，移除过时信息释放 tokens。加 confirm 执行降噪。",
+    summary: "AI 筛选会话上下文，自动移除过时信息释放 tokens。",
   },
   {
     cmd: "stop",
@@ -91,6 +91,14 @@ export const SLASH_COMMANDS: readonly SlashCommandSpec[] = [
     summary:
       "reasoning_effort cap — high is the safe default (vLLM/Azure compatible); max is a DeepSeek extension.",
     argCompleter: ["low", "medium", "high", "max"],
+  },
+  {
+    cmd: "thinking",
+    group: "setup",
+    argsHint: "<on|off>",
+    summary:
+      "toggle chain-of-thought reasoning — off = faster/cheaper responses (thinking:disabled), on = full reasoning",
+    argCompleter: ["on", "off"],
   },
   {
     cmd: "max-tokens",
@@ -161,7 +169,7 @@ export const SLASH_COMMANDS: readonly SlashCommandSpec[] = [
     summary: "project info — version, website, repo, license",
   },
 
-  { cmd: "sessions", group: "session", summary: "list saved sessions (current marked with ▸)" },
+  { cmd: "sessions", group: "session", summary: "list saved sessions · open / delete / rename" },
   {
     cmd: "session-persist",
     group: "session",

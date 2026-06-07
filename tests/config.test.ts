@@ -33,6 +33,7 @@ import {
   loadProxyConfig,
   loadRateLimit,
   loadReasoningEffort,
+  loadThinkingOverride,
   loadSemanticEmbeddingUserConfig,
   loadSubagentModels,
   loadTheme,
@@ -52,6 +53,7 @@ import {
   saveEditMode,
   saveIndexConfig,
   saveReasoningEffort,
+  saveThinkingOverride,
   saveSemanticEmbeddingConfig,
   saveSubagentModels,
   saveTheme,
@@ -673,6 +675,30 @@ describe("config", () => {
     saveReasoningEffort("high", path);
     expect(loadEditMode(path)).toBe("auto");
     expect(loadReasoningEffort(path)).toBe("high");
+  });
+
+  it("loadThinkingOverride returns undefined when unset", () => {
+    expect(loadThinkingOverride(path)).toBeUndefined();
+  });
+
+  it("saveThinkingOverride + loadThinkingOverride round-trip enabled/disabled", () => {
+    for (const v of ["enabled", "disabled"] as const) {
+      saveThinkingOverride(v, path);
+      expect(loadThinkingOverride(path)).toBe(v);
+      expect(readConfig(path).thinkingOverride).toBe(v);
+    }
+  });
+
+  it("saveThinkingOverride doesn't clobber other persisted fields", () => {
+    saveReasoningEffort("high", path);
+    saveThinkingOverride("disabled", path);
+    expect(loadReasoningEffort(path)).toBe("high");
+    expect(loadThinkingOverride(path)).toBe("disabled");
+  });
+
+  it("loadThinkingOverride returns undefined for unknown values", () => {
+    writeConfig({ thinkingOverride: "turbo" as any }, path);
+    expect(loadThinkingOverride(path)).toBeUndefined();
   });
 
   it("saveTheme + loadTheme round-trip a registered theme", () => {

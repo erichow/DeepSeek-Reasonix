@@ -23,6 +23,8 @@ export interface SessionPickerProps {
   /** When provided, broadcasts to the web dashboard so it can resolve via `/api/modal/resolve`. */
   pickerPorts?: PickerBroadcastPorts;
   onFocusChange?: (focus: number) => void;
+  /** Name of the currently-active session (shown with a ● marker). Omit in startup picker. */
+  activeSessionName?: string;
 }
 
 const PAGE_MARGIN = 6;
@@ -34,6 +36,7 @@ export function SessionPicker({
   walletCurrency,
   pickerPorts,
   onFocusChange,
+  activeSessionName,
 }: SessionPickerProps): React.ReactElement {
   const [focus, setFocus] = useState(0);
   const [searching, setSearching] = useState(false);
@@ -232,6 +235,7 @@ export function SessionPicker({
             key={s.name}
             info={s}
             focused={start + i === focus}
+            isActive={s.name === activeSessionName}
             walletCurrency={walletCurrency}
           />
         ))
@@ -281,10 +285,12 @@ export function SessionPicker({
 function SessionRow({
   info,
   focused,
+  isActive,
   walletCurrency,
 }: {
   info: SessionInfo;
   focused: boolean;
+  isActive: boolean;
   walletCurrency?: string;
 }): React.ReactElement {
   const branch = info.meta.branch ?? "main";
@@ -299,7 +305,9 @@ function SessionRow({
   const time = relativeTime(info.mtime);
   return (
     <Box>
-      <Text color={focused ? TONE.brand : FG.faint}>{focused ? "  ▸ " : "    "}</Text>
+      <Text color={focused ? TONE.brand : FG.faint}>
+        {focused && isActive ? " ▸● " : focused ? "  ▸ " : isActive ? " ●  " : "    "}
+      </Text>
       <Text bold={focused} color={focused ? FG.strong : FG.sub}>
         {info.name.padEnd(12)}
       </Text>

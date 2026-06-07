@@ -362,7 +362,7 @@ export const EN: TranslationSchema = {
       description: "load an archived plan as a read-only Time Travel snapshot (default: newest)",
       argsHint: "[N]",
     },
-    sessions: { description: "list saved sessions (current marked with ▸)" },
+    sessions: { description: "list saved sessions · open / delete / rename" },
     "session-persist": {
       description:
         "toggle whether reasonix resumes the last session on launch. /session-persist off = always start fresh",
@@ -1115,6 +1115,9 @@ export const EN: TranslationSchema = {
         "usage: /effort <{list}>   (high is the safe default; max is a DeepSeek extension)",
       effortUsageNoMax: "usage: /effort <{list}>",
       effortSet: "effort → {effort}",
+      thinkingStatus: "thinking → {status}   (/thinking on|off to change)",
+      thinkingUsage: "usage: /thinking <on|off>   (off = faster/cheaper, no chain-of-thought)",
+      thinkingSet: "thinking → {value}",
       budgetNoCap:
         "no session budget set — Reasonix will keep going until you stop it. Set one with: /budget <usd>   (e.g. /budget 5)",
       budgetStatus:
