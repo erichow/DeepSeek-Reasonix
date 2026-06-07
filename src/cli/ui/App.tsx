@@ -3155,6 +3155,8 @@ function AppInner({
         if (result.openSessionsPicker) {
           const sessions = listSessionsForWorkspace(currentRootDir);
           setSessionsPickerList(sessions);
+          const curIdx = session ? sessions.findIndex((s) => s.name === session) : -1;
+          if (curIdx >= 0) setSessionsPickerFocus(curIdx);
           setPendingSessionsPicker(true);
           pushHistory(text);
           return;
