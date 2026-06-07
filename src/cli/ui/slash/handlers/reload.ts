@@ -1,11 +1,6 @@
-import { readConfig, clearConfigCache } from "@/config.js";
 import { ReloadManager } from "@/reload/manager.js";
+import type { Changes } from "@/reload/types.js";
 import type { SlashHandler } from "../dispatch.js";
-
-function formatLine(label: string, ok: boolean, detail: string): string {
-  const icon = ok ? "✓" : "✗";
-  return `  ${icon} ${label}: ${detail}`;
-}
 
 const reload: SlashHandler = (args, loop, ctx) => {
   const sub = (args[0] ?? "").toLowerCase();
@@ -26,99 +21,29 @@ const reload: SlashHandler = (args, loop, ctx) => {
     configPath,
   });
 
-  // Detect changes
   const changes = manager.detectChanges();
 
-  // If no changes at all
   if (!changes.hasAny) {
     return { info: "✓ 一切均为最新 — Config / Skills / MCP 均未检测到变更" };
   }
 
-  // Sub-command filter
-  const lines: string[] = [];
-  let hasWork = false;
+  // Build filtered Changes so applyChanges only touches requested modules
+  const includeAll = sub === "";
+  const filteredChanges: Changes = {
+    config: includeAll || sub === "config" ? changes.config : "unchanged",
+    configDetails: includeAll || sub === "config" ? changes.configDetails : [],
+    skills: includeAll || sub === "skills" ? changes.skills : [],
+    mcp: includeAll || sub === "mcp" ? changes.mcp : "unchanged",
+    mcpDetails: includeAll || sub === "mcp" ? changes.mcpDetails : [],
+    hasAny: false,
+  };
+  filteredChanges.hasAny =
+    (filteredChanges.config === "changed" || filteredChanges.config === "new") ||
+    filteredChanges.skills.length > 0 ||
+    (filteredChanges.mcp === "changed" || filteredChanges.mcp === "new");
 
-  // Config
-  if (sub === "" || sub === "config") {
-    if (changes.config === "changed" || changes.config === "new") {
-      hasWork = true;
-      lines.push("", "  Config:");
-      for (const d of changes.configDetails) {
-        lines.push(formatLine(`• ${d.name}`, true, d.detail ?? ""));
-      }
-      // Apply config changes
-      clearConfigCache(configPath);
-      const cfg = readConfig(configPath);
-      const cfgOpts: Record<string, unknown> = {};
-      if (cfg.model) cfgOpts.model = cfg.model;
-      if (cfg.stream !== undefined) cfgOpts.stream = cfg.stream;
-      if (cfg.reasoningEffort) cfgOpts.reasoningEffort = cfg.reasoningEffort;
-      if (cfg.maxOutputTokens !== undefined) cfgOpts.maxOutputTokens = cfg.maxOutputTokens;
-
-      if (Object.keys(cfgOpts).length > 0) {
-        loop.configure(
-          cfgOpts as { model?: string; stream?: boolean; reasoningEffort?: string; maxOutputTokens?: number },
-        );
-        lines.push(formatLine("  runtime", true, `model/stream/effort/tokens 已更新`));
-      }
-      if (cfg.budgetUsd !== undefined) {
-        loop.setBudget(cfg.budgetUsd ?? null);
-        lines.push(formatLine("  budget", true, `预算已更新: ${cfg.budgetUsd ?? "无上限"}`));
-      }
-      loop.rebuildSystemPrompt();
-      lines.push(formatLine("  system", true, "系统提示已重建"));
-    } else {
-      lines.push("", "  Config: 无变更");
-    }
-  }
-
-  // Skills
-  if (sub === "" || sub === "skills") {
-    if (changes.skills.length > 0) {
-      hasWork = true;
-      lines.push("", "  Skills:");
-      for (const s of changes.skills) {
-        const icon = s.kind === "removed" ? "—" : s.kind === "new" ? "+" : "~";
-        lines.push(`    ${icon} ${s.name}  ${s.detail ?? ""}`);
-      }
-      loop.rebuildSystemPrompt();
-      lines.push(formatLine("  index", true, "技能索引已更新（下次 API 调用生效）"));
-    } else {
-      lines.push("", "  Skills: 无变更");
-    }
-  }
-
-  // MCP
-  if (sub === "" || sub === "mcp") {
-    if (changes.mcp === "changed" || changes.mcp === "new") {
-      hasWork = true;
-      lines.push("", "  MCP:");
-      lines.push(formatLine("  config", true, "检测到变更，触发重载..."));
-      if (ctx.reloadMcp) {
-        ctx.reloadMcp().then((result) => {
-          const details: string[] = [];
-          for (const name of result.added) details.push(`    + ${name} ✓`);
-          for (const name of result.removed) details.push(`    — ${name}`);
-          for (const f of result.failed) details.push(`    ✗ ${f.spec}: ${f.reason}`);
-          if (ctx.postInfo) {
-            ctx.postInfo(`MCP 重载结果:\n${details.join("\n")}`);
-          }
-        });
-        lines.push(formatLine("  reload", true, "后台重载中（结果将稍后显示）"));
-      } else {
-        lines.push(formatLine("  reload", false, "MCP 重载不可用（无 reloadMcp 上下文）"));
-      }
-    } else {
-      lines.push("", "  MCP: 无变更");
-    }
-  }
-
-  if (!hasWork) {
-    lines.push("  (所请求的模块无变更)");
-  }
-
-  // Save updated snapshot
-  manager.applyChanges(changes, {
+  // Apply changes via ReloadManager (handles config + skills + snapshot)
+  const report = manager.applyChanges(filteredChanges, {
     loop: {
       model: loop.model,
       stream: loop.stream,
@@ -129,14 +54,48 @@ const reload: SlashHandler = (args, loop, ctx) => {
       setBudget: (usd) => loop.setBudget(usd),
       rebuildSystemPrompt: () => loop.rebuildSystemPrompt(),
     },
-    mcpReload: ctx.reloadMcp ?? (async () => ({ added: [], removed: [], failed: [], summaries: [] })),
-    skillStore: {
-      list: () => [],
-    },
+    mcpReload: async () => ({ added: [], removed: [], failed: [], summaries: [] }),
     configPath,
     projectRoot: codeRoot,
     homeDir: ctx.homeDir ?? "",
   });
+
+  // Build display text from the report
+  const lines: string[] = [];
+
+  if (report.config.length > 0) {
+    lines.push("", "  Config:");
+    for (const r of report.config) {
+      lines.push(`  ${r.ok ? "✓" : "✗"} ${r.detail}`);
+    }
+  }
+
+  if (report.skills.length > 0) {
+    lines.push("", "  Skills:");
+    for (const r of report.skills) {
+      lines.push(`  ${r.ok ? "✓" : "✗"} ${r.detail}`);
+    }
+  }
+
+  if (report.mcp.length > 0) {
+    lines.push("", "  MCP:");
+    lines.push("  ✓ 检测到变更，触发重载...");
+    // Fire async MCP reload — results arrive via postInfo
+    if (ctx.reloadMcp) {
+      ctx.reloadMcp().then((result) => {
+        const details: string[] = [];
+        for (const name of result.added) details.push(`    + ${name} ✓`);
+        for (const name of result.removed) details.push(`    — ${name}`);
+        for (const f of result.failed) details.push(`    ✗ ${f.spec}: ${f.reason}`);
+        if (ctx.postInfo) {
+          ctx.postInfo(`MCP 重载结果:\n${details.join("\n")}`);
+        }
+      });
+      lines.push("  ✓ MCP 后台重载中（结果稍后显示）");
+    } else {
+      lines.push("  ✗ MCP 重载不可用（无 reloadMcp 上下文）");
+    }
+  }
 
   return { info: [`✓ 重载完成`, ...lines].join("\n") };
 };

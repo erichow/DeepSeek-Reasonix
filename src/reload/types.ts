@@ -98,9 +98,6 @@ export interface ReloadContext {
     failed: Array<{ spec: string; reason: string }>;
     summaries: unknown[];
   }>;
-  skillStore: {
-    list: () => Array<{ name: string; scope: string; path: string }>;
-  };
   configPath: string;
   projectRoot: string;
   homeDir: string;
