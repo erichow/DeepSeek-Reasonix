@@ -49,6 +49,7 @@ const effort: SlashHandler = (args, loop, ctx) => {
   const next: ReasoningEffort = raw;
   loop.configure({ reasoningEffort: next });
   ctx.dispatch?.({ type: "session.effort.change", reasoningEffort: next });
+  ctx.pushDashboardEvent?.({ kind: "status", text: `effort: ${next}` });
   try {
     saveReasoningEffort(next, ctx.configPath);
   } catch {
@@ -146,6 +147,8 @@ const thinking: SlashHandler = (args, loop, ctx) => {
   }
   const next: ThinkingOverride = isOn ? "enabled" : "disabled";
   loop.configure({ thinkingOverride: next });
+  ctx.dispatch?.({ type: "session.thinking.change", thinkingOverride: next });
+  ctx.pushDashboardEvent?.({ kind: "status", text: `thinking: ${next}` });
   try {
     saveThinkingOverride(next, ctx.configPath);
   } catch {

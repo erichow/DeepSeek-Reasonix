@@ -308,9 +308,17 @@ export async function handleSettings(
         if (ctx.setEditMode) ctx.setEditMode(mode);
         else saveEditMode(mode, ctx.configPath);
       }
-      if (effortPendingLive) ctx.applyEffortLive?.(effortPendingLive);
+      if (effortPendingLive) {
+        ctx.applyEffortLive?.(effortPendingLive);
+        ctx.pushDashboardEvent?.({ kind: "status", text: `effort: ${effortPendingLive}` });
+      }
       if (modelPendingLive) ctx.applyModelLive?.(modelPendingLive);
       if (budgetPending !== undefined) ctx.setBudgetUsdLive?.(budgetPending);
+      if (fields.thinkingOverride !== undefined) {
+        const value = String(fields.thinkingOverride).toLowerCase() as "enabled" | "disabled";
+        ctx.applyThinkingLive?.(value);
+        ctx.pushDashboardEvent?.({ kind: "status", text: `thinking: ${value}` });
+      }
       ctx.audit?.({ ts: Date.now(), action: "set-settings", payload: { fields: changed } });
     }
     return { status: 200, body: { changed } };

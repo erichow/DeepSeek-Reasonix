@@ -167,6 +167,8 @@ export interface SlashContext {
   };
   /** Current session id — included in `/feedback`'s diagnostic block when present. */
   sessionId?: string;
+  /** Push an event to all connected SSE clients. Used by `/model`, `/effort`, `/thinking` to sync state to web-ui in real time. */
+  pushDashboardEvent?: (event: import("../../../server/context.js").DashboardEvent) => void;
 }
 
 export type SlashGroup =

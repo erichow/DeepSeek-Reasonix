@@ -218,6 +218,15 @@ function sseToIncoming(ev: any): Record<string, any>[] {
         tabId: "tab-1",
         text: ev.text,
       });
+      // Settings-relevant status events trigger a live re-fetch so the web-ui
+      // picks up `/thinking`, `/effort`, and other TUI-side setting changes
+      // without waiting for the 5s poll.
+      if (
+        ev.text.startsWith("effort:") ||
+        ev.text.startsWith("thinking:")
+      ) {
+        void refreshServerSnapshots();
+      }
       break;
     }
     case "ping":
@@ -323,7 +332,7 @@ function emitServerSettings(settings: any, overview?: any): void {
   emitEvent({
     type: "$settings",
     tabId: "tab-1",
-    thinkingOverride: settings?.thinkingOverride ?? undefined,
+    thinkingOverride: settings?.thinkingOverride ?? overview?.thinkingOverride ?? undefined,
     reasoningEffort: settings?.reasoningEffort ?? overview?.reasoningEffort ?? "high",
     editMode: settings?.editMode ?? overview?.editMode ?? "review",
     budgetUsd: settings?.budgetUsd ?? overview?.budgetUsd ?? null,
@@ -425,9 +434,14 @@ function emitOverviewSnapshot(overview: ServerOverviewResponse | null | undefine
 }
 
 async function refreshServerSnapshots(): Promise<void> {
-  const [sessionsData, overview] = await Promise.all([apiFetch("sessions"), apiFetch("overview")]);
+  const [sessionsData, overview, settings] = await Promise.all([
+    apiFetch("sessions"),
+    apiFetch("overview"),
+    apiFetch("settings"),
+  ]);
   emitSessionsSnapshot(sessionsData);
   emitOverviewSnapshot(overview);
+  if (settings) emitServerSettings(settings, overview);
 }
 
 // 初始化 Server 状态

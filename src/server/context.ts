@@ -39,6 +39,8 @@ export interface DashboardContext {
   applyEffortLive?: (effort: import("../config.js").ReasoningEffort) => void;
   /** Same model swap path /model <id> takes — live + persisted. */
   applyModelLive?: (model: string) => void;
+  /** Side-channel for thinking override — live dispatch to agent store. */
+  applyThinkingLive?: (override: import("../config.js").ThinkingOverride) => void;
   /** Cached model catalog. Null = in flight / failed; `[]` = API answered empty. */
   getModels?: () => string[] | null;
   /** Session USD cap; null disables. Re-arms the 80% warning latch. */
@@ -60,6 +62,8 @@ export interface DashboardContext {
   getMessages?: () => DashboardMessage[];
   /** Events are JSON-serializable subsets — raw `LoopEvent` carries React-only state. */
   subscribeEvents?: (handler: (event: DashboardEvent) => void) => () => void;
+  /** Push an event to all connected SSE clients right now. Used for out-of-band updates like settings changes. */
+  pushDashboardEvent?: (event: DashboardEvent) => void;
   /** Routes through the TUI's `handleSubmit` so slashes, `!cmd`, `@path`, plan-mode gating all match. */
   submitPrompt?: (text: string) => SubmitResult;
   abortTurn?: () => void;

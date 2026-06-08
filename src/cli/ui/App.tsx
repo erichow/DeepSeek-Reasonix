@@ -2254,6 +2254,10 @@ function AppInner({
           loop.configure({ model });
           agentStore.dispatch({ type: "session.model.change", model });
         },
+        applyThinkingLive: (override) => {
+          loop.configure({ thinkingOverride: override });
+          agentStore.dispatch({ type: "session.thinking.change", thinkingOverride: override });
+        },
         getModels: () => modelsRef.current,
         setBudgetUsdLive: (usd) => {
           loop.setBudget(usd);
@@ -2269,6 +2273,9 @@ function AppInner({
           return () => {
             eventSubscribersRef.current.delete(handler);
           };
+        },
+        pushDashboardEvent: (ev) => {
+          broadcastDashboardEvent(ev);
         },
         submitPrompt: (text: string): SubmitResult => {
           if (busyRef.current) {
@@ -3136,6 +3143,9 @@ function AppInner({
           models,
           refreshModels,
           generateSessionTitle: generateCurrentSessionTitle,
+          pushDashboardEvent: (ev) => {
+            broadcastDashboardEvent(ev);
+          },
         });
         if (
           (fromQQ

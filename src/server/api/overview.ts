@@ -26,6 +26,8 @@ export interface OverviewResponse {
   toolCount: number | null;
   /** Persisted reasoning_effort (low | medium | high | max). */
   reasoningEffort: string;
+  /** Persisted thinking override (enabled | disabled), null when unset. */
+  thinkingOverride: string | null;
   /** Session USD spend cap; null when off. Drives the chat side-rail's Tool budget card. */
   budgetUsd: number | null;
   /** Live session stats — null in standalone mode. */
@@ -59,6 +61,7 @@ export async function handleOverview(
     mcpServerCount: ctx.getMcpServers?.().length ?? null,
     toolCount: ctx.tools ? ctx.tools.size : null,
     reasoningEffort: isReasoningEffort(cfg.reasoningEffort) ? cfg.reasoningEffort : "high",
+    thinkingOverride: cfg.thinkingOverride === "enabled" || cfg.thinkingOverride === "disabled" ? cfg.thinkingOverride : null,
     budgetUsd: ctx.loop?.budgetUsd ?? null,
     stats: ctx.getStats?.() ?? null,
     semanticIndexExists,

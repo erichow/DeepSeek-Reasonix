@@ -792,6 +792,8 @@ function ModelEffortMenu({
         right: 0,
         width: 280,
         position: "absolute",
+        overflow: "visible",
+        maxHeight: "none",
       }}
     >
       <div className="ph">
@@ -836,7 +838,7 @@ function ModelEffortMenu({
         <span className="tok">E</span>
         <span>{t("composer.switchEffort")}</span>
       </div>
-      <div className="popup-list">
+      <div className="popup-list" style={{ maxHeight: 180, overflowY: "auto" }}>
         {EFFORTS.map((e) => (
           <div
             key={e}
@@ -862,15 +864,30 @@ function ModelEffortMenu({
         <div
           className="popup-item"
           data-active={thinkingOverride !== "disabled"}
-          onClick={() => onThinkingToggle?.()}
+          onClick={() => {
+            if (thinkingOverride === "disabled") onThinkingToggle?.();
+            else onPickEffort(currentEffort);
+          }}
         >
           <span className="ico">
             <I.brain size={12} />
           </span>
           <div className="nm">
-            <span className="cmd">
-              {thinkingOverride === "disabled" ? t("statusbar.noThink") : t("settings.thinking")}
-            </span>
+            <span className="cmd">{t("settings.thinking")}</span>
+          </div>
+        </div>
+        <div
+          className="popup-item"
+          data-active={thinkingOverride === "disabled"}
+          onClick={() => {
+            if (thinkingOverride !== "disabled") onThinkingToggle?.();
+          }}
+        >
+          <span className="ico">
+            <I.brain size={12} />
+          </span>
+          <div className="nm">
+            <span className="cmd">{t("statusbar.noThink")}</span>
           </div>
         </div>
       </div>
