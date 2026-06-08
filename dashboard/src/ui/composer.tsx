@@ -185,6 +185,7 @@ export function Composer({
   const [popup, setPopup] = useState<Popup>(null);
   const [activeIdx, setActiveIdx] = useState(0);
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
+  const [focused, setFocused] = useState(false);
   const nonceRef = useRef(0);
   const modelWrapRef = useRef<HTMLDivElement>(null);
   // macOS Chinese IME fires compositionend before the confirm keydown.
@@ -415,7 +416,7 @@ export function Composer({
   };
 
   return (
-    <div className="composer-wrap">
+    <div className={`composer-wrap ${focused || draft.trim() ? 'expanded' : 'collapsed'}`}>
       <div className="composer-inner">
         {queuedSends && queuedSends.length > 0 ? (
           <div className="composer-queued">
@@ -501,6 +502,10 @@ export function Composer({
             placeholder={t("composer.placeholder")}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
+            onFocus={() => setFocused(true)}
+            onBlur={() => {
+              if (!draft.trim()) setFocused(false);
+            }}
             onCompositionStart={() => {
               composingRef.current = true;
             }}

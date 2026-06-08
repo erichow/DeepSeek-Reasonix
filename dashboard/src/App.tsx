@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { isWebRuntime } from "./lib/tauri-bridge";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
@@ -1876,35 +1876,33 @@ function TabRuntime({
           onClick={onToggleMobileSide}
         />
 
-        <TitleBar
+        <TopBar
           session={session}
           model={state.settings?.model}
+          workspaceDir={state.settings?.workspaceDir}
+          busy={state.busy}
+          hasMessages={state.messages.length > 0}
+          tabs={tabsList}
+          activeTabId={activeTabId}
+          singleTab={tabsList.length <= 1}
           sideOn={!sideCollapsed}
           ctxOn={!ctxCollapsed}
           onToggleSide={onToggleSide}
           onToggleCtx={onToggleCtx}
-          onOpenCommands={() => palette.setOpen(true)}
-          onOpenSettings={() => openSettingsAt("general")}
+          onNewChat={newChat}
+          onAbort={abort}
           onCopy={conversationCopy}
           onExport={exportConversation}
           onClear={() => dispatch({ t: "clear" })}
-          hasMessages={state.messages.length > 0}
-          mobileSideOpen={mobileSideOpen}
-          onToggleMobileSide={onToggleMobileSide}
-        />
-
-        <TabBar
-          tabs={tabsList}
-          activeId={activeTabId}
-          setActive={setActiveTabId}
-          onClose={(id) => {
+          onOpenCommands={() => palette.setOpen(true)}
+          onOpenSettings={() => openSettingsAt("general")}
+          onCloseTab={(id) => {
             if (tabsList.length <= 1) return;
             invoke("rpc_send", {
               line: JSON.stringify({ cmd: "tab_close", tabId: id }),
             }).catch((err) => console.error("tab_close failed", err));
           }}
-          onNew={onNewTab}
-          singleTab={tabsList.length <= 1}
+          onSetActiveTab={setActiveTabId}
         />
 
         <Sidebar
@@ -1935,21 +1933,7 @@ function TabRuntime({
             />
           ) : (
             <>
-              <MainHead
-                session={session}
-                model={state.settings?.model}
-                workspaceDir={state.settings?.workspaceDir}
-                busy={state.busy}
-                hasMessages={state.messages.length > 0}
-                onAbort={abort}
-                onNewChat={newChat}
-                onCopy={conversationCopy}
-                onExport={exportConversation}
-                onOpenWorkdir={(anchor) => {
-                  setWdAnchor(anchor);
-                  setWdOpen(true);
-                }}
-              />
+              {/* MainHead 已合并到 TopBar */}
               <div className="thread" ref={threadRef} style={{ position: "relative" }}>
                 {loadingSession ? (
                   <div className="thread-loading-overlay">
@@ -2329,56 +2313,54 @@ function WinClose() {
   );
 }
 
-function TitleBar({
+function TopBar({
   session,
   model,
+  workspaceDir,
+  busy,
+  hasMessages,
+  tabs,
+  activeTabId,
+  singleTab,
   sideOn,
   ctxOn,
   onToggleSide,
   onToggleCtx,
-  onOpenCommands,
-  onOpenSettings,
+  onNewChat,
+  onAbort,
   onCopy,
   onExport,
   onClear,
-  hasMessages,
-  mobileSideOpen,
-  onToggleMobileSide,
+  onOpenCommands,
+  onOpenSettings,
+  onCloseTab,
+  onSetActiveTab,
 }: {
   session: string;
   model?: string;
+  workspaceDir?: string;
+  busy: boolean;
+  hasMessages: boolean;
+  tabs: { id: string; workspaceDir?: string }[];
+  activeTabId: string;
+  singleTab: boolean;
   sideOn: boolean;
   ctxOn: boolean;
   onToggleSide: () => void;
   onToggleCtx: () => void;
-  onOpenCommands: () => void;
-  onOpenSettings: () => void;
+  onNewChat: () => void;
+  onAbort: () => void;
   onCopy: () => void;
   onExport: () => void;
   onClear: () => void;
-  hasMessages: boolean;
-  /** 移动端：汉堡菜单状态 */
-  mobileSideOpen: boolean;
-  onToggleMobileSide: () => void;
+  onOpenCommands: () => void;
+  onOpenSettings: () => void;
+  onCloseTab: (id: string) => void;
+  onSetActiveTab: (id: string) => void;
 }) {
   useLang();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isMaximized, setIsMaximized] = useState(false);
   const moreWrapRef = useRef<HTMLDivElement>(null);
-  const isMac = document.documentElement.dataset.platform === "macos";
-  // Web 模式下隐藏原生窗口控件
-  const isWeb = document.documentElement.dataset.web === "true";
-
-  useEffect(() => {
-    const win = getCurrentWindow();
-    win.isMaximized().then(setIsMaximized);
-    let unlisten: (() => void) | undefined;
-    win.listen("tauri://resize", async () => {
-      setIsMaximized(await win.isMaximized());
-    }).then((fn: (() => void) | undefined) => { unlisten = fn; });
-    return () => unlisten?.();
-  }, []);
-
   useEffect(() => {
     if (!menuOpen) return;
     const onDown = (e: MouseEvent) => {
@@ -2389,185 +2371,167 @@ function TitleBar({
     return () => window.removeEventListener("mousedown", onDown);
   }, [menuOpen]);
 
-  const win = getCurrentWindow();
+  const wsLabel = workspaceDir
+    ? workspaceDir.split(/[\\/]/).pop() || "workspace"
+    : session || "—";
+
+  // 多 Tab 处理：显示前 3 个，多余折叠
+  const MAX_VISIBLE_TABS = 3;
+  const visibleTabs = singleTab ? [] : tabs.slice(0, MAX_VISIBLE_TABS);
+  const hiddenCount = singleTab ? 0 : Math.max(0, tabs.length - MAX_VISIBLE_TABS);
 
   return (
-    <header className="titlebar">
-      {/* left: sidebar toggle + brand */}
-      <div className="tb-left">
-        {isMac && !isWeb ? (
-          <div className="mac-controls" aria-label={t("app.titlebar.windowControls")}>
-            <button
-              type="button"
-              className="mac-ctrl close"
-              title={t("app.titlebar.close")}
-              aria-label={t("app.titlebar.close")}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                win.close();
-              }}
-            >
-              <WinClose />
-            </button>
-            <button
-              type="button"
-              className="mac-ctrl minimize"
-              title={t("app.titlebar.minimize")}
-              aria-label={t("app.titlebar.minimize")}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                win.minimize();
-              }}
-            >
-              <WinMinimize />
-            </button>
-            <button
-              type="button"
-              className="mac-ctrl zoom"
-              title={isMaximized ? t("app.titlebar.restore") : t("app.titlebar.maximize")}
-              aria-label={isMaximized ? t("app.titlebar.restore") : t("app.titlebar.maximize")}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                win.toggleMaximize();
-              }}
-            >
-              {isMaximized ? <WinRestore /> : <WinMaximize />}
-            </button>
-          </div>
-        ) : null}
-        {/* 移动端汉堡菜单按钮（仅在 xs 断点可见，通过 CSS 控制） */}
-        <button
-          type="button"
-          className="tb-mobile-menu"
-          aria-label="打开会话列表"
-          aria-expanded={mobileSideOpen}
-          onClick={onToggleMobileSide}
-        >
-          {mobileSideOpen ? <I.x size={18} /> : <I.panel_l size={18} />}
-        </button>
-        {/* 桌面端侧边栏切换按钮 */}
-        <button
-          type="button"
-          className="iconbtn tb-desktop-side-btn"
-          data-on={sideOn}
-          title={localizeShortcutText(t("app.titlebar.sidebar"))}
-          onClick={onToggleSide}
-        >
-          <I.panel_l size={14} />
-        </button>
-        <div className="tb-meta" data-tauri-drag-region>
-          <div className="brand" data-tauri-drag-region>
-            <span className="mark" />
-            <span className="brand-name">Reasonix</span>
-          </div>
-          {session && (
-            <div className="crumbs" data-tauri-drag-region>
-              <span className="sep">/</span>
-              <span className="cur">{model ?? "—"}</span>
-            </div>
-          )}
-        </div>
+    <header className="topbar">
+      {/* 左侧：sidebar toggle + brand */}
+      <button
+        type="button"
+        className="iconbtn"
+        data-on={sideOn}
+        title={localizeShortcutText(t("app.titlebar.sidebar"))}
+        onClick={onToggleSide}
+        style={{ flexShrink: 0 }}
+      >
+        <I.panel_l size={14} />
+      </button>
+
+      <div className="tbb-brand">
+        <span className="mark" />
+        <span>Reasonix</span>
       </div>
 
-      {/* center: drag region */}
-      <span className="grow" data-tauri-drag-region />
+      <span className="tbb-sep">/</span>
+      <span className="tbb-ws" title={workspaceDir ?? wsLabel}>
+        {wsLabel}
+      </span>
 
-      {/* right: panel toggles + more + window controls */}
-      <div className="tb-right">
+      {/* 多 Tab pills */}
+      {visibleTabs.map((t) => {
+        const tabWs = t.workspaceDir ?? "";
+        const label = tabWs.split(/[\\/]/).pop() || "workspace";
+        return (
+          <span
+            key={t.id}
+            className="tbb-tab"
+            data-active={t.id === activeTabId}
+            onClick={() => onSetActiveTab(t.id)}
+          >
+            {label}
+            {!singleTab ? (
+              <span
+                className="close"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCloseTab(t.id);
+                }}
+              >
+                <I.x size={10} />
+              </span>
+            ) : null}
+          </span>
+        );
+      })}
+      {hiddenCount > 0 ? (
+        <span className="tbb-tab-more" title={t("app.titlebar.more")}>
+          ▸ {hiddenCount} more
+        </span>
+      ) : null}
+
+      <span className="tbb-grow" />
+
+      {/* 模型 pill */}
+      {model ? (
+        <span className="tbb-pill">
+          <I.brain size={10} />
+          {model}
+        </span>
+      ) : null}
+
+      {/* 操作按钮 */}
+      <button
+        type="button"
+        className="tbb-btn"
+        onClick={onCopy}
+        disabled={!hasMessages}
+        title={t("app.titlebar.copyMd")}
+      >
+        <I.copy size={13} />
+      </button>
+      <button
+        type="button"
+        className="tbb-btn"
+        onClick={onExport}
+        disabled={!hasMessages}
+        title={t("app.titlebar.exportMd")}
+      >
+        <I.download size={13} />
+      </button>
+      <button
+        type="button"
+        className="tbb-btn"
+        onClick={onNewChat}
+        title={t("app.header.newChat")}
+      >
+        <I.plus size={14} />
+      </button>
+      {busy ? (
         <button
           type="button"
-          className="iconbtn"
-          data-on={ctxOn}
-          title={t("app.titlebar.contextPanel")}
-          onClick={onToggleCtx}
+          className="tbb-btn"
+          data-busy="true"
+          onClick={onAbort}
+          title={t("app.header.abort")}
         >
-          <I.panel_r size={14} />
+          <I.stop size={14} />
         </button>
+      ) : null}
 
-        <div ref={moreWrapRef} style={{ position: "relative" }}>
-          <button
-            type="button"
-            className="iconbtn"
-            title={t("app.titlebar.more")}
-            onClick={() => setMenuOpen((v) => !v)}
+      {/* 更多菜单 */}
+      <div ref={moreWrapRef} style={{ position: "relative" }}>
+        <button
+          type="button"
+          className="tbb-btn"
+          title={t("app.titlebar.more")}
+          onClick={() => setMenuOpen((v) => !v)}
+        >
+          <I.more size={14} />
+        </button>
+        {menuOpen ? (
+          <div
+            className="popup"
+            style={{ top: "calc(100% + 6px)", right: 0, left: "auto", bottom: "auto", width: 200 }}
           >
-            <I.more size={14} />
-          </button>
-          {menuOpen ? (
-            <div
-              className="popup"
-              style={{ top: "calc(100% + 6px)", right: 0, left: "auto", bottom: "auto", width: 220 }}
-            >
-              <div className="popup-list">
-                <div className="popup-item" onClick={() => { onOpenCommands(); setMenuOpen(false); }}>
-                  <span className="ico"><I.search size={12} /></span>
-                  <div className="nm"><span>{t("app.titlebar.commandPalette")}</span></div>
-                  <span className="kb">
-                    <Shortcut keys={["mod", "K"]} />
-                  </span>
-                </div>
-                <div
-                  className="popup-item"
-                  onClick={() => { if (hasMessages) onCopy(); setMenuOpen(false); }}
-                  style={{ opacity: hasMessages ? 1 : 0.5 }}
-                >
-                  <span className="ico"><I.copy size={12} /></span>
-                  <div className="nm"><span>{t("app.titlebar.copyMd")}</span></div>
-                </div>
-                <div
-                  className="popup-item"
-                  onClick={() => { if (hasMessages) onExport(); setMenuOpen(false); }}
-                  style={{ opacity: hasMessages ? 1 : 0.5 }}
-                >
-                  <span className="ico"><I.download size={12} /></span>
-                  <div className="nm"><span>{t("app.titlebar.exportMd")}</span></div>
-                </div>
-                <div className="popup-item" onClick={() => { onClear(); setMenuOpen(false); }}>
-                  <span className="ico"><I.x size={12} /></span>
-                  <div className="nm"><span>{t("app.titlebar.clearChat")}</span></div>
-                </div>
-                <div className="popup-item" onClick={() => { onOpenSettings(); setMenuOpen(false); }}>
-                  <span className="ico"><I.cog size={12} /></span>
-                  <div className="nm"><span>{t("app.titlebar.settings")}</span></div>
-                  <span className="kb">
-                    <Shortcut keys={["mod", ","]} />
-                  </span>
-                </div>
+            <div className="popup-list">
+              <div className="popup-item" onClick={() => { onOpenCommands(); setMenuOpen(false); }}>
+                <span className="ico"><I.search size={12} /></span>
+                <div className="nm"><span>{t("app.titlebar.commandPalette")}</span></div>
+                <span className="kb"><Shortcut keys={["mod", "K"]} /></span>
+              </div>
+              <div className="popup-item" onClick={() => { onOpenSettings(); setMenuOpen(false); }}>
+                <span className="ico"><I.cog size={12} /></span>
+                <div className="nm"><span>{t("app.titlebar.settings")}</span></div>
+                <span className="kb"><Shortcut keys={["mod", ","]} /></span>
+              </div>
+              <div className="popup-sep" />
+              <div className="popup-item" onClick={() => { onClear(); setMenuOpen(false); }}>
+                <span className="ico"><I.x size={12} /></span>
+                <div className="nm"><span>{t("app.titlebar.clearChat")}</span></div>
               </div>
             </div>
-          ) : null}
-        </div>
-
-        {/* window controls — 仅在非 Web 的原生 Tauri 窗口环境下渲染 */}
-        {!isMac && !isWeb ? (
-          <div className="win-controls">
-            <button
-              type="button"
-              className="win-ctrl"
-              title={t("app.titlebar.minimize")}
-              onMouseDown={(e) => { e.stopPropagation(); win.minimize(); }}
-            >
-              <WinMinimize />
-            </button>
-            <button
-              type="button"
-              className="win-ctrl"
-              title={isMaximized ? t("app.titlebar.restore") : t("app.titlebar.maximize")}
-              onMouseDown={(e) => { e.stopPropagation(); win.toggleMaximize(); }}
-            >
-              {isMaximized ? <WinRestore /> : <WinMaximize />}
-            </button>
-            <button
-              type="button"
-              className="win-ctrl close"
-              title={t("app.titlebar.close")}
-              onMouseDown={(e) => { e.stopPropagation(); win.close(); }}
-            >
-              <WinClose />
-            </button>
           </div>
         ) : null}
       </div>
+
+      {/* 右侧面板切换 */}
+      <button
+        type="button"
+        className="iconbtn"
+        data-on={ctxOn}
+        title={t("app.titlebar.contextPanel")}
+        onClick={onToggleCtx}
+        style={{ flexShrink: 0 }}
+      >
+        <I.panel_r size={14} />
+      </button>
     </header>
   );
 }
@@ -2621,95 +2585,6 @@ function TabBar({
           </div>
         );
       })}
-    </div>
-  );
-}
-
-function MainHead({
-  session,
-  model,
-  workspaceDir,
-  busy,
-  hasMessages,
-  onAbort,
-  onNewChat,
-  onCopy,
-  onExport,
-  onOpenWorkdir,
-}: {
-  session: string;
-  model?: string;
-  workspaceDir?: string;
-  busy: boolean;
-  hasMessages: boolean;
-  onAbort: () => void;
-  onNewChat: () => void;
-  onCopy: () => void;
-  onExport: () => void;
-  onOpenWorkdir: (anchor: { top?: number; bottom?: number; left: number }) => void;
-}) {
-  useLang();
-  const wsLabel = workspaceDir
-    ? workspaceDir.split(/[\\/]/).pop() || "workspace"
-    : t("app.header.noWorkspace");
-  return (
-    <div className="main-head">
-      <div className="title-wrap">
-        <h1>
-          <span className="editable">{session}</span>
-          {busy ? (
-            <span className="pill" style={{ color: "var(--accent)" }}>
-              <span className="dot" />
-              <span className="shimmer">{t("app.header.running")}</span>
-            </span>
-          ) : null}
-        </h1>
-        <div className="sub">
-          <span
-            className="ws-crumb"
-            onClick={(e) => {
-              const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-              onOpenWorkdir({ top: r.bottom + 6, left: r.left });
-            }}
-            style={{ cursor: "pointer" }}
-            title={workspaceDir ?? t("app.header.clickToSelect")}
-          >
-            <I.folder size={10} /> {wsLabel}
-          </span>
-          {model ? (
-            <span className="pill">
-              <I.brain size={10} /> {model}
-            </span>
-          ) : null}
-        </div>
-      </div>
-      <span className="grow" />
-      <button
-        type="button"
-        className="h-btn"
-        onClick={onCopy}
-        disabled={!hasMessages}
-        title={t("app.header.copyMd")}
-      >
-        <I.copy size={12} /> {t("app.header.copy")}
-      </button>
-      <button
-        type="button"
-        className="h-btn"
-        onClick={onExport}
-        disabled={!hasMessages}
-        title={t("app.header.exportMd")}
-      >
-        <I.download size={12} /> {t("app.header.export")}
-      </button>
-      <button type="button" className="h-btn" onClick={onNewChat}>
-        <I.plus size={12} /> {t("app.header.newChat")}
-      </button>
-      {busy ? (
-        <button type="button" className="h-btn primary" onClick={onAbort}>
-          <I.stop size={12} /> {t("app.header.abort")}
-        </button>
-      ) : null}
     </div>
   );
 }

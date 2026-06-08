@@ -351,11 +351,10 @@ button:disabled {
 
 .app {
   display: grid;
-  grid-template-rows: 36px 36px 1fr 26px;
+  grid-template-rows: 40px 1fr 26px;
   grid-template-columns: 244px 1fr 320px;
   grid-template-areas:
-    "title  title   title"
-    "tabs   tabs    tabs"
+    "topbar topbar topbar"
     "side   main    ctx"
     "status status  status";
   height: 100%;
@@ -377,6 +376,148 @@ html[data-platform="macos"] .app {
 }
 .app[data-ctx-collapsed="true"][data-side-collapsed="true"] {
   grid-template-columns: 0 1fr 0;
+}
+
+/* ── TopBar (TitleBar + TabBar + MainHead 三合一) ── */
+.topbar {
+  grid-area: topbar;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  height: 40px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  min-width: 0;
+  overflow: visible;
+}
+/* 分隔线用于 TopBar 弹出菜单 */
+.popup-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+.topbar .tbb-brand {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  white-space: nowrap;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+.topbar .tbb-brand .mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--accent);
+  display: inline-block;
+}
+.topbar .tbb-sep {
+  color: var(--muted-2);
+  margin: 0 2px;
+}
+.topbar .tbb-ws {
+  color: var(--fg-2);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  min-width: 0;
+}
+.topbar .tbb-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  color: var(--fg-2);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.topbar .tbb-tab:hover {
+  background: var(--card-hover);
+}
+.topbar .tbb-tab[data-active="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.topbar .tbb-tab .close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  opacity: 0.5;
+}
+.topbar .tbb-tab .close:hover {
+  opacity: 1;
+  background: var(--card-hover);
+}
+.topbar .tbb-tab-more {
+  font-size: 11px;
+  color: var(--muted-2);
+  padding: 0 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.topbar .tbb-tab-more:hover {
+  color: var(--fg);
+}
+.topbar .tbb-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-family: Geist Mono, monospace;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.topbar .tbb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+.topbar .tbb-btn:hover {
+  background: var(--card-hover);
+  color: var(--fg);
+}
+.topbar .tbb-btn[disabled] {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+.topbar .tbb-btn[data-busy="true"] {
+  color: var(--danger);
+}
+.topbar .tbb-btn[data-busy="true"]:hover {
+  background: var(--danger-soft);
+}
+.topbar .tbb-grow {
+  flex: 1;
+  min-width: 4px;
 }
 
 /* ---------- TABBAR ---------- */
@@ -2938,7 +3079,7 @@ html:not([data-platform="macos"]) .shortcut kbd[data-key="mod"] {
 
 /* ---------- COMPOSER ---------- */
 .composer-wrap {
-  padding: 12px 28px 18px;
+  padding: 4px 28px 8px;
   background: var(--bg);
   border-top: 1px solid var(--border);
   position: relative;
@@ -3105,6 +3246,29 @@ html:not([data-platform="macos"]) .shortcut kbd[data-key="mod"] {
   font-family: inherit;
   font-size: 14px;
   color: var(--muted-2);
+}
+/* 折叠模式：默认隐藏 hint 行，聚焦时展开 */
+.composer-wrap.collapsed .hint-row {
+  display: none;
+}
+.composer-wrap.collapsed textarea {
+  max-height: 36px;
+  overflow: hidden;
+  padding: 6px 14px;
+}
+.composer-wrap.collapsed .composer-foot {
+  padding-top: 0px;
+  padding-bottom: 2px;
+}
+.composer-wrap.expanded .hint-row {
+  display: flex;
+}
+.composer-wrap.expanded textarea {
+  max-height: 220px;
+}
+.composer-wrap.expanded .composer-foot {
+  padding: 6px 8px 8px 8px;
+}
 }
 .hint-row .grow { flex: 1; }
 .hint-row .hint-sep {
@@ -7007,10 +7171,10 @@ html[data-web="true"] .win-controls {
 
   /* ── Single-column grid layout ── */
   .app {
-    grid-template-rows: 36px 1fr 0;
+    grid-template-rows: 40px 1fr 0;
     grid-template-columns: 1fr;
     grid-template-areas:
-      "title"
+      "topbar"
       "main"
       "status";
     height: 100dvh;
