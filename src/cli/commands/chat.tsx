@@ -2,6 +2,7 @@ import { render } from "ink";
 import React, { useMemo, useState } from "react";
 import {
   type ReasoningEffort,
+  type ThinkingOverride,
   bridgeEndpointEnv,
   loadApiKey,
   loadHistoryScrollMode,
@@ -51,6 +52,7 @@ export type { McpLifecycleNotice, McpLifecycleSink, McpRuntime, ProgressInfo };
 export interface ChatOptions {
   model: string;
   reasoningEffort?: ReasoningEffort;
+  thinkingOverride?: ThinkingOverride;
   system: string;
   /** Re-runs the prompt builder on /new so REASONIX.md edits don't need a restart. Should produce the same string `system` was built from. */
   rebuildSystem?: () => string;
@@ -236,6 +238,7 @@ function Root({
         key={activeSession ?? "__new__"}
         model={appProps.model}
         reasoningEffort={appProps.reasoningEffort}
+        thinkingOverride={appProps.thinkingOverride}
         system={appProps.system}
         rebuildSystem={appProps.rebuildSystem}
         transcript={appProps.transcript}

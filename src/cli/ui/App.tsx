@@ -45,6 +45,7 @@ import {
   loadMouseWheelRows,
   loadReasoningEffort,
   loadTheme,
+  loadThinkingOverride,
   markEditModeHintShown,
   markMouseClipboardHintShown,
   mouseClipboardHintShown,
@@ -225,6 +226,7 @@ function isBusyPromptCommand(text: string): boolean {
 export interface AppProps {
   model: string;
   reasoningEffort?: ReasoningEffort;
+  thinkingOverride?: import("../../config.js").ThinkingOverride;
   system: string;
   /** Re-runs the prompt builder on /new so REASONIX.md edits don't need a restart. Must produce the same shape as `system` was built from. */
   rebuildSystem?: () => string;
@@ -452,6 +454,7 @@ type AppInnerProps = AppProps & {
 function AppInner({
   model,
   reasoningEffort: initialReasoningEffort,
+  thinkingOverride: initialThinkingOverride,
   system,
   rebuildSystem,
   transcript,
@@ -1050,6 +1053,7 @@ function AppInner({
       hooks: hookList,
       hookCwd: currentRootDir,
       reasoningEffort: initialReasoningEffort ?? loadReasoningEffort(),
+      thinkingOverride: initialThinkingOverride ?? loadThinkingOverride(),
       maxOutputTokens: loadMaxOutputTokens(),
       maxIterPerTurn: loadMaxIterPerTurn(),
       rebuildSystem,

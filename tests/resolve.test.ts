@@ -53,6 +53,15 @@ describe("resolveDefaults", () => {
     expect(resolveDefaults({}).reasoningEffort).toBe("max");
   });
 
+  it("config.thinkingOverride persists across launches", () => {
+    writeConfig({ thinkingOverride: "disabled" }, join(home, ".reasonix", "config.json"));
+    expect(resolveDefaults({}).thinkingOverride).toBe("disabled");
+  });
+
+  it("config.thinkingOverride defaults to undefined when unset", () => {
+    expect(resolveDefaults({}).thinkingOverride).toBeUndefined();
+  });
+
   it("--model wins over config.model", () => {
     writeConfig({ model: "deepseek-v4-flash" }, join(home, ".reasonix", "config.json"));
     const r = resolveDefaults({ model: "deepseek-v4-pro" });

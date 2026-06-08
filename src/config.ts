@@ -182,6 +182,8 @@ export interface ReasonixConfig {
   /** When false, skip the boot splash animation and show the main UI immediately. Default true. */
   banner?: boolean;
   reasoningEffort?: ReasoningEffort;
+  /** Override extra_body.thinking.type — "enabled" | "disabled", undefined = auto-detect by model name. */
+  thinkingOverride?: "enabled" | "disabled";
   /** Per-turn output token cap sent as `max_tokens` in the API request (#2196). Null = no cap. */
   maxOutputTokens?: number | null;
   /** Default workspace root for the desktop client. CLI uses cwd. */

@@ -2,9 +2,11 @@ import {
   DEFAULT_MODEL,
   type ReasoningEffort,
   type ReasonixConfig,
+  type ThinkingOverride,
   isReasoningEffort,
   loadModel,
   loadReasoningEffort,
+  loadThinkingOverride,
   normalizeMcpConfig,
   readConfig,
 } from "../config.js";
@@ -14,6 +16,7 @@ import { specToRaw } from "../mcp/spec.js";
 export interface ResolvedDefaults {
   model: string;
   reasoningEffort: ReasoningEffort;
+  thinkingOverride?: ThinkingOverride;
   mcp: string[];
   session: string | undefined;
   /** True when autoResumeSession:false is in effect — tells callers to skip the session picker. */
@@ -43,6 +46,8 @@ export function resolveDefaults(flags: RawCliFlags): ResolvedDefaults {
       ? "high"
       : loadReasoningEffort();
 
+  const thinkingOverride = flags.noConfig ? undefined : loadThinkingOverride();
+
   const merged = flags.noConfig ? cfg : mergeDotMcpJson(cfg, process.cwd());
 
   const normalizedMcp = normalizeMcpConfig(
@@ -55,7 +60,7 @@ export function resolveDefaults(flags: RawCliFlags): ResolvedDefaults {
   const forceNew =
     cfg.autoResumeSession === false && flags.session === undefined ? true : undefined;
 
-  return { model, reasoningEffort, mcp, session, forceNew };
+  return { model, reasoningEffort, thinkingOverride, mcp, session, forceNew };
 }
 
 function mergeDotMcpJson(cfg: ReasonixConfig, projectRoot: string): ReasonixConfig {

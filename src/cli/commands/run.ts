@@ -8,6 +8,7 @@ import {
   loadApiKey,
   loadEndpoint,
   loadMaxIterPerTurn,
+  loadThinkingOverride,
   loadToolRateLimit,
   normalizeMcpConfig,
   readConfig,
@@ -152,6 +153,7 @@ export async function runCommand(opts: RunOptions): Promise<void> {
     tools,
     model: opts.model,
     budgetUsd: opts.budgetUsd,
+    thinkingOverride: loadThinkingOverride(),
     maxIterPerTurn: loadMaxIterPerTurn(),
   });
   const prefixHash = prefix.fingerprint;

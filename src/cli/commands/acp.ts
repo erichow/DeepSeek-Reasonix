@@ -32,6 +32,7 @@ import {
   loadMaxIterPerTurn,
   loadModel,
   loadReasoningEffort,
+  loadThinkingOverride,
   normalizeMcpConfig,
   readConfig,
 } from "../../config.js";
@@ -185,6 +186,7 @@ async function buildSession(opts: {
     tools: toolset.tools,
     model,
     budgetUsd: opts.budgetUsd,
+    thinkingOverride: loadThinkingOverride(),
     maxIterPerTurn: loadMaxIterPerTurn(),
     session: `acp-${timestampSuffix()}`,
   });

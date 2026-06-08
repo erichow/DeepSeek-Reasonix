@@ -340,6 +340,7 @@ program
       await chatCommand({
         model: defaults.model,
         reasoningEffort: defaults.reasoningEffort,
+        thinkingOverride: defaults.thinkingOverride,
         system: chatRebuildSystem(),
         rebuildSystem: chatRebuildSystem,
         transcript: opts.transcript,

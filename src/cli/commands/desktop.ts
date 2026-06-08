@@ -46,6 +46,7 @@ import {
   loadShowSystemEvents,
   loadSubagentModels,
   loadTavilyApiKey,
+  loadThinkingOverride,
   loadWorkspaceDir,
   normalizeMcpConfig,
   pushRecentWorkspace,
@@ -1379,6 +1380,7 @@ function buildRuntimeFor(tab: Tab): RuntimeState {
   const client = new DeepSeekClient({ apiKey: ep.apiKey, baseUrl: ep.baseUrl });
   const prefix = new ImmutablePrefix({ system: tab.system, toolSpecs: toolset.tools.specs() });
   const reasoningEffort = loadReasoningEffort();
+  const thinkingOverride = loadThinkingOverride();
   const loop = new CacheFirstLoop({
     client,
     prefix,
@@ -1387,6 +1389,7 @@ function buildRuntimeFor(tab: Tab): RuntimeState {
     budgetUsd: tab.budgetUsd,
     session: tab.currentSession,
     reasoningEffort,
+    thinkingOverride,
     maxIterPerTurn: loadMaxIterPerTurn(),
     hooks: tab.hooks,
     hookCwd: tab.rootDir,
