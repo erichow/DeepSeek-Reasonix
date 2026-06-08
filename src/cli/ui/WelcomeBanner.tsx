@@ -17,7 +17,27 @@ export interface WelcomeBannerProps {
   languageVersion?: number;
 }
 
-const HINTS = ["/help", "/skill", "/init", "/memory", "/cost"] as const;
+const SKULL_LINES = [
+  "⠀⠀⠀⢀⡴⣫⠎⠙⣡⠞⣡⠖⢋⡥⠀⠀⠀⠀⠀⠀⠀⢀⣤⣾⣿⡟⣿⡿⠁⠀⠙⢿⣿⣿⣿⣿⣿⠙⢿⣿⣿⣿⣿⣿⣶⣄⡀⠀⠀⠀⠀⠀⠈⠓⠁⠀⢉⠲⣍⠳⣄⠀⠀⠀⠀⠀",
+  "⠀⠀⢠⢮⣞⠕⣰⢫⠄⠈⠁⡴⠋⠰⠂⠀⠀⠀⠀⢀⣴⣿⣿⣿⡟⠀⣿⡃⠀⠀⠀⠈⣻⣿⣿⣿⣿⣇⣀⠻⣿⣿⣿⣿⣿⣿⣿⣦⡀⠀⠀⠀⠀⠀⢀⣀⡫⡕⢌⠣⡈⢣⡀⠀⠀⠀",
+  "⠀⢀⢾⣿⠏⡼⣵⠋⣠⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⠴⢺⡏⠀⠀⠀⠀⠀⠈⠻⣿⣿⣿⡇⠀⠉⠛⣿⣿⠹⣿⣿⣿⣿⣿⣦⠀⠀⠀⠀⠈⠳⣝⢎⢮⢳⡙⢄⢱⣄⠀⠀",
+  "⠀⣞⣜⡏⣼⣽⠃⡼⢃⡴⠂⠀⠀⠀⠀⠀⢀⣼⣿⣿⣿⣿⣿⠋⠀⠘⠃⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⡇⠀⠀⠀⢘⣿⠷⣽⣿⣿⣿⣿⣿⣷⡄⠀⠀⠀⠀⠈⠈⠀⢀⠀⣈⢦⠽⡆⠀",
+  "⢼⢱⡍⠀⠃⠃⠸⢡⡟⠀⢠⡞⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⢇⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⡇⣠⣤⣒⢍⣸⡀⠈⢿⣿⣿⣿⣿⣿⣿⣆⠀⠀⠀⢀⢰⡘⣎⢧⠘⡎⣧⠹⡄",
+  "⢸⢠⠇⡞⢰⠀⡆⢠⠀⢀⠈⠤⠤⠶⠿⢟⣿⣿⣿⣿⣻⡿⠀⣈⠭⠶⣶⣤⣤⣀⠀⠀⠀⠀⠐⡶⠺⢫⡟⠁⣶⣶⡎⠙⢦⠘⣿⡏⣿⣿⣿⣿⣿⣧⡀⠀⠘⣆⢣⢸⠈⡆⢹⣹⡆⠇",
+  "⢸⢸⠀⡇⢿⢰⡇⣸⢀⡏⠀⡀⢀⡀⠀⣼⣿⣿⣿⣿⠻⣧⠞⠁⣾⣿⠆⠹⡄⠀⠙⡆⠀⠀⠀⠓⠊⡟⠀⠀⠙⠛⠁⠀⠈⡇⢿⢷⢿⣿⣿⣿⣿⣟⠛⠂⠀⠘⠘⠈⠀⠁⠈⠃⡇⡀",
+  "⢸⢸⡄⣇⢸⠸⡇⢻⠈⡇⢸⠇⠘⠀⢰⣿⣿⣿⣿⡏⠀⡇⠀⠀⠈⠁⠀⠀⡇⠀⢰⣣⠀⠀⠀⠀⠀⠸⣀⠀⠀⠀⠀⠀⢠⠃⠘⠈⢸⣿⣿⣿⣿⣿⡀⢀⡄⣶⠀⡆⠀⢰⠀⡇⡇⡇",
+  "⠸⡿⡇⡙⠘⠃⠃⠈⠀⣁⠈⡅⠀⣦⣿⣿⣿⣿⣿⣧⠀⢧⠀⠀⠀⠀⢀⠔⡇⠀⠸⡍⠀⡀⠀⠀⠀⠀⣌⡑⡖⠒⢲⠚⣁⠄⠀⠀⢸⣿⢏⣽⣿⣿⣧⢸⢡⠇⢸⠃⢀⡎⣰⢡⣧⠇",
+  "⠀⢹⣧⢹⡰⡄⣦⠀⣆⠸⡄⣹⣾⣿⣿⡿⣿⡿⣿⡟⠀⠀⠙⠒⠒⠋⠁⠀⠈⠒⠒⠃⠀⠈⠀⠀⠀⠀⠀⠸⠉⠉⠉⠏⠀⠀⠀⠀⣾⢣⡏⠸⣿⣿⣿⣧⣈⠀⠁⢀⠈⠀⣡⢫⠎⠀",
+  "⢦⡀⢫⢧⢣⡹⣜⢧⠘⢦⠹⣄⠳⡀⢳⢀⣿⣷⡝⣷⠀⠀⠀⠀⠀⠀⢀⣀⣤⠤⠖⠒⠚⠋⠉⠉⠉⠉⠉⠐⠒⡆⠤⣄⣀⠀⠀⢸⡏⣸⣓⢧⣿⡇⡴⢃⣞⡞⢠⠞⡼⣱⣣⠏⠀⠀",
+  "⠔⠛⠲⣽⣷⡳⡝⠎⠓⠀⠀⠀⠀⣄⠀⣼⣿⣿⣽⡞⡆⠀⠀⡠⡔⠊⠉⠀⠀⠀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⡀⠇⠀⡿⢸⠀⠀⣼⠕⢡⠏⡼⠿⣿⡤⠋⠋⠴⠣⢾⠞⣱⠋⠀⠀⠀",
+  "⡀⠀⠀⠀⢙⣷⣄⡀⢠⡀⢢⡙⢄⠘⢮⡉⢩⡿⣿⣿⣻⡄⠀⣿⣵⡠⣴⣾⡿⠋⢁⡠⠤⠒⠒⠒⠤⢄⡀⠈⠻⣿⣿⣳⠇⠀⢰⡟⠊⡡⣾⡣⣦⠞⣡⠞⣠⢄⡴⣠⠞⠁⠀⠀⠀⠀",
+  "⢈⣆⣴⡾⠛⠉⠻⢽⡲⣝⢦⡙⢦⣙⠂⠁⠀⠀⣬⣿⣿⣻⡄⠘⢿⣶⣿⠋⣠⣞⣁⣀⡤⠤⠤⠤⠤⠤⠬⣑⣄⣈⡻⠋⠀⢠⣿⣶⣫⢄⡠⢎⡡⠞⣥⣾⠕⣫⠞⠁⠀⠀⠀⠀⠀⠀",
+  "⣽⣿⣿⣷⣄⠀⠀⠀⠙⢮⡓⠬⣓⠎⢁⠀⢀⡲⣬⡻⠭⣲⡽⣆⠀⠙⢷⡋⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡼⠊⠀⠀⣠⠟⣯⠘⢚⣩⢴⣫⢞⡴⢉⡤⠞⠁⠀⠀⠀⠀⠀⠀⠀⠀",
+  "⣿⣿⣿⣿⣿⣷⣄⠀⠀⠀⠉⠢⣌⠓⢬⣙⡲⢭⣓⡯⠽⠁⢀⡼⣳⣦⡀⠉⠑⠒⠤⠤⠤⠤⠤⠴⠒⠉⠁⠀⢀⣤⡞⣡⢿⣻⢅⠐⠺⠽⣚⡭⠖⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+  "⢿⣿⣿⣿⡻⣿⣿⣿⣦⡀⠀⠀⠈⠳⣄⠀⠉⠓⠪⠭⢍⣰⢷⣯⣗⣊⢹⣶⣤⣀⠀⠒⠒⠒⠒⠒⠚⠉⣀⣤⣾⡟⣇⡇⢨⣿⠮⣻⠯⠖⠋⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+  "⠀⠻⣿⣿⣿⣦⣍⡛⠻⢿⣦⡀⠀⠀⠀⠑⢤⡀⠀⠀⠀⠈⠙⠺⠯⠭⣼⠈⢻⣸⢿⢲⢢⢤⢤⢶⣶⣿⣿⣾⣿⠃⡼⡷⠒⠚⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+  "⠀⠀⡈⠻⣿⣿⣿⣿⣷⣤⡹⣿⣦⣀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⢸⠀⠀⢹⢼⢸⣸⢸⢸⢸⣿⡇⡟⡟⡣⠊⠀⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+];
 
 export function WelcomeBanner({
   inCodeMode,
@@ -26,47 +46,45 @@ export function WelcomeBanner({
 }: WelcomeBannerProps): React.ReactElement {
   const tagline = inCodeMode ? t("ui.taglineCode") : t("ui.taglineChat");
   const taglineSub = t("ui.taglineSub");
-  const startTextRaw = t("ui.startSessionHint");
-
   return (
     <Box flexDirection="column" alignItems="center" marginY={1}>
-      <Box
-        flexDirection="column"
-        alignItems="center"
-        borderStyle="round"
-        borderColor={TONE.brand}
-        paddingX={4}
-        paddingY={1}
-      >
-        <Box flexDirection="row" gap={2}>
-          <Text color={TONE.brand} bold>
-            {"REASONIX"}
-          </Text>
-          <Text color={FG.faint}>{"×"}</Text>
-          <Box flexDirection="row" gap={1}>
-            <Text>{"🐋"}</Text>
-            <Text color={TONE.accent} bold>
-              {"DeepSeek"}
-            </Text>
+      <Box borderStyle="round" borderColor={TONE.brand} paddingRight={4}>
+        <Box flexDirection="row">
+          <Box flexDirection="column" alignItems="flex-start">
+            {SKULL_LINES.map((line) => (
+              <Text key={line} color={TONE.brand} bold>
+                {line}
+              </Text>
+            ))}
+          </Box>
+          <Box flexDirection="column" justifyContent="center" paddingLeft={2}>
+            <Box flexDirection="row" gap={2} alignItems="center">
+              <Text color={TONE.brand} bold>
+                {"RISING"}
+              </Text>
+              <Text color={FG.faint}>{"×"}</Text>
+              <Box flexDirection="row" gap={1} alignItems="center">
+                <Text>{"🐋"}</Text>
+                <Text color={TONE.accent} bold>
+                  {"DeepSeek"}
+                </Text>
+              </Box>
+            </Box>
+
+            <Box marginTop={1} flexDirection="column">
+              <Text color={FG.body} bold>
+                {tagline}
+              </Text>
+              <Text color={FG.meta}>{taglineSub}</Text>
+            </Box>
+
+            <Box marginTop={1}>
+              <Text color={FG.meta} bold>
+                {"═══ 品质改变世界 ═══"}
+              </Text>
+            </Box>
           </Box>
         </Box>
-
-        <Box marginTop={1} flexDirection="column" alignItems="center">
-          <Text color={FG.body}>{tagline}</Text>
-          <Text color={FG.meta}>{taglineSub}</Text>
-        </Box>
-      </Box>
-
-      <Box marginTop={1}>
-        <Text color={FG.sub}>{startTextRaw}</Text>
-      </Box>
-
-      <Box marginTop={1} flexDirection="row" gap={3}>
-        {HINTS.map((cmd) => (
-          <Text key={cmd} color={FG.meta}>
-            {cmd}
-          </Text>
-        ))}
       </Box>
 
       {inCodeMode && workspaceRoot ? (
