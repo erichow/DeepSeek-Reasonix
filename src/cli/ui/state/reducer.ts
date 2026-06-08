@@ -138,6 +138,11 @@ export function reduce(state: AgentState, event: AgentEvent): AgentState {
         ? state
         : { ...state, status: { ...state.status, reasoningEffort: event.reasoningEffort } };
 
+    case "session.thinking.change":
+      return state.status.thinkingOverride === event.thinkingOverride
+        ? state
+        : { ...state, status: { ...state.status, thinkingOverride: event.thinkingOverride } };
+
     case "mcp.loading": {
       const current = state.status.mcpLoading;
       if (event.total <= 0) {

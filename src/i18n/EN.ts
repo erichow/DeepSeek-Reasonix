@@ -1630,6 +1630,9 @@ export const EN: TranslationSchema = {
     catalogEmpty: "  \u00b7  catalog empty \u2014 using known fallbacks",
     modelsAvailable: "  \u00b7  {count} models available",
     effortHeader: "    EFFORT  \u00b7  reasoning_effort cap",
+    thinkingHeader: "    THINKING  \u00b7  chain-of-thought",
+    thinkingEnabled: "on  \u2014 show reasoning before answering",
+    thinkingDisabled: "off  \u2014 direct answer, no chain-of-thought",
     modelsHeader: "    MODELS  \u00b7  DeepSeek-compatible ids",
     effortDesc: {
       low: "fastest \u2014 minimal reasoning",

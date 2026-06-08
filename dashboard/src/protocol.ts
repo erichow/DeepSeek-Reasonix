@@ -303,6 +303,7 @@ export type WebSearchEngineName =
 
 export type SettingsEvent = {
   type: "$settings";
+  thinkingOverride?: "enabled" | "disabled";
   reasoningEffort: ReasoningEffort;
   editMode: EditMode;
   budgetUsd: number | null;
@@ -343,6 +344,7 @@ export type BalanceEvent = {
 
 export type SettingsPatch = {
   reasoningEffort?: ReasoningEffort;
+  thinkingOverride?: "enabled" | "disabled";
   editMode?: EditMode;
   budgetUsd?: number | null;
   baseUrl?: string;

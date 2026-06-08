@@ -1534,6 +1534,9 @@ export const zhCN: TranslationSchema = {
     catalogEmpty: "  ·  目录为空 — 使用已知备选",
     modelsAvailable: "  ·  {count} 个模型可用",
     effortHeader: "    强度  ·  reasoning_effort 上限",
+    thinkingHeader: "    思考  ·  思维链",
+    thinkingEnabled: "开启  —  显示推理过程",
+    thinkingDisabled: "关闭  —  直接回答，不展示思维链",
     modelsHeader: "    模型  ·  DeepSeek 兼容 ID",
     effortDesc: {
       low: "最快 — 极少推理",

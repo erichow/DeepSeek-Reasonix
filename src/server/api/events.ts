@@ -36,6 +36,7 @@ export function handleEvents(
   // state is correct on first paint (instead of inheriting whatever
   // the prior connection's last delta said).
   if (ctx.isBusy) writeEvent({ kind: "busy-change", busy: ctx.isBusy() });
+
   // Replay the active modal — without this, a client that connects after
   // the modal-up broadcast fires (e.g., dashboard tab opened mid-turn)
   // misses the gate and the tool appears to hang forever (#1770).

@@ -8,12 +8,14 @@ import {
   isReasoningEffort,
   loadBaiduApiKey,
   loadModel,
+  loadThinkingOverride,
   normalizeSkillPathEntries,
   normalizeSkillPaths,
   readConfig,
   webSearchEngine as readWebSearchEngine,
   redactKey,
   saveEditMode,
+  saveThinkingOverride,
   writeConfig,
 } from "../../config.js";
 import { getLanguage, getSupportedLanguages, setLanguage } from "../../i18n/index.js";
@@ -32,6 +34,7 @@ interface SettingsBody {
   baiduApiKey?: unknown;
   model?: unknown;
   budgetUsd?: unknown;
+  thinkingOverride?: unknown;
   skillPaths?: unknown;
   subagentModels?: unknown;
 }
@@ -80,6 +83,7 @@ export async function handleSettings(
     return {
       status: 200,
       body: {
+        thinkingOverride: live?.thinkingOverride ?? loadThinkingOverride(ctx.configPath) ?? null,
         apiKey: cfg.apiKey ? redactKey(cfg.apiKey) : null,
         apiKeySet: Boolean(cfg.apiKey),
         baseUrl: cfg.baseUrl ?? null,
@@ -112,6 +116,7 @@ export async function handleSettings(
           webSearchEngine: "next-turn",
           model: "next-turn",
           budgetUsd: "live",
+          thinkingOverride: "next-turn",
           skillPaths: "next-session",
           subagentModels: "next-skill-run",
         },
@@ -242,6 +247,20 @@ export async function handleSettings(
         };
       }
       changed.push("budgetUsd");
+    }
+
+    if (fields.thinkingOverride !== undefined) {
+      const raw = String(fields.thinkingOverride).toLowerCase();
+      if (raw !== "enabled" && raw !== "disabled") {
+        return {
+          status: 400,
+          body: { error: "thinkingOverride must be 'enabled' or 'disabled'" },
+        };
+      }
+      const value = raw as "enabled" | "disabled";
+      saveThinkingOverride(value, ctx.configPath);
+      ctx.loop?.configure({ thinkingOverride: value });
+      changed.push("thinkingOverride");
     }
 
     if (fields.skillPaths !== undefined) {

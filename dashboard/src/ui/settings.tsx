@@ -604,6 +604,28 @@ function PageGeneral({
         </div>
         <div className="setting-row">
           <div className="l">
+            <div className="n">{t("settings.thinking")}</div>
+            <div className="h">{t("settings.thinkingHint")}</div>
+          </div>
+          <div className="seg-ctrl">
+            <button
+              type="button"
+              data-on={settings.thinkingOverride !== "disabled"}
+              onClick={() => onSave({ thinkingOverride: "enabled" })}
+            >
+              {t("settings.shown")}
+            </button>
+            <button
+              type="button"
+              data-on={settings.thinkingOverride === "disabled"}
+              onClick={() => onSave({ thinkingOverride: "disabled" })}
+            >
+              {t("settings.hidden")}
+            </button>
+          </div>
+        </div>
+        <div className="setting-row">
+          <div className="l">
             <div className="n">{t("settings.editMode")}</div>
             <div className="h">{t("settings.editModeHint")}</div>
           </div>

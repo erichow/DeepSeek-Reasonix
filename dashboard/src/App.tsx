@@ -185,6 +185,7 @@ export type SessionInfo = {
 };
 
 export type Settings = {
+  thinkingOverride?: "enabled" | "disabled";
   reasoningEffort: "low" | "medium" | "high" | "max";
   editMode: "review" | "auto" | "yolo" | "plan";
   budgetUsd: number | null;
@@ -821,6 +822,7 @@ function applyIncomingRaw(state: State, ev: IncomingEvent): State {
         sessionFiles: wsChanged ? [] : state.sessionFiles,
         retryNonce: wsChanged ? 0 : state.retryNonce,
         settings: {
+          thinkingOverride: ev.thinkingOverride,
           reasoningEffort: ev.reasoningEffort,
           editMode: ev.editMode,
           budgetUsd: ev.budgetUsd,
@@ -2134,6 +2136,7 @@ function TabRuntime({
                 textareaRef={composerRef}
                 modelLabel={state.settings?.model ?? "deepseek-v4-flash"}
                 reasoningEffort={state.settings?.reasoningEffort ?? "high"}
+                thinkingOverride={state.settings?.thinkingOverride}
                 onModelChange={(model) => {
                   saveSettings({ model });
                   flashToast(t("app.toast.modelSwitched", { model }));
@@ -2141,6 +2144,15 @@ function TabRuntime({
                 onEffortChange={(reasoningEffort) => {
                   saveSettings({ reasoningEffort });
                   flashToast(t("app.toast.effortSwitched", { effort: reasoningEffort }));
+                }}
+                onThinkingToggle={() => {
+                  const next = state.settings?.thinkingOverride === "disabled" ? "enabled" : "disabled";
+                  saveSettings({ thinkingOverride: next });
+                  flashToast(
+                    next === "disabled"
+                      ? t("statusbar.noThink")
+                      : (state.settings?.reasoningEffort ?? "high"),
+                  );
                 }}
                 editMode={state.settings?.editMode ?? "review"}
                 onEditModeChange={(mode) => {

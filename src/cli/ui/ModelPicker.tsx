@@ -1,6 +1,6 @@
 import { Box, Text, useStdout } from "ink";
 import React, { useState } from "react";
-import type { ReasoningEffort } from "../../config.js";
+import type { ReasoningEffort, ThinkingOverride } from "../../config.js";
 import { t } from "../../i18n/index.js";
 import { useKeystroke } from "./keystroke-context.js";
 import { Pill, modelBadgeFor, pillModel } from "./primitives/Pill.js";
@@ -9,6 +9,7 @@ import { FG, TONE } from "./theme/tokens.js";
 export type ModelPickerOutcome =
   | { kind: "select"; id: string }
   | { kind: "effort"; effort: ReasoningEffort }
+  | { kind: "thinking"; thinkingOverride: ThinkingOverride }
   | { kind: "quit" };
 
 export interface ModelPickerProps {
@@ -17,6 +18,7 @@ export interface ModelPickerProps {
   /** Model id currently active in the loop — marked with the cursor on open. */
   current: string;
   currentEffort: ReasoningEffort;
+  currentThinking?: ThinkingOverride;
   /** Effort enum filtered for the active endpoint — drops "max" on non-DeepSeek hosts (#1794). */
   effortChoices: ReadonlyArray<ReasoningEffort>;
   onChoose: (outcome: ModelPickerOutcome) => void;
@@ -26,12 +28,16 @@ export interface ModelPickerProps {
 
 const PAGE_MARGIN = 8;
 
-type Row = { kind: "effort"; effort: ReasoningEffort } | { kind: "model"; id: string };
+type Row =
+  | { kind: "effort"; effort: ReasoningEffort }
+  | { kind: "thinking"; thinkingOverride: ThinkingOverride }
+  | { kind: "model"; id: string };
 
 export function ModelPicker({
   models,
   current,
   currentEffort,
+  currentThinking,
   effortChoices,
   onChoose,
   onRefresh,
@@ -43,11 +49,22 @@ export function ModelPicker({
     kind: "effort",
     effort,
   }));
+  const thinkingRows: Row[] = [
+    { kind: "thinking", thinkingOverride: "enabled" },
+    { kind: "thinking", thinkingOverride: "disabled" },
+  ];
   const modelRows: Row[] = modelList.map((id) => ({ kind: "model", id }));
-  const rows: Row[] = [...effortRows, ...modelRows];
+  const rows: Row[] = [...effortRows, ...thinkingRows, ...modelRows];
 
-  const initialIndex = effortRows.length + Math.max(0, modelList.indexOf(current));
-  const [focus, setFocus] = useState(initialIndex);
+  const effortCount = effortRows.length;
+  const thinkingIdx = thinkingRows.findIndex(
+    (r) => r.kind === "thinking" && r.thinkingOverride === currentThinking,
+  );
+  const initialIndex =
+    effortCount + Math.max(0, thinkingIdx) + Math.max(0, modelList.indexOf(current));
+  // Fall back to first model if thinking is undefined
+  const actualInitialIndex = currentThinking === undefined ? effortCount : initialIndex;
+  const [focus, setFocus] = useState(actualInitialIndex);
   const { stdout } = useStdout();
   const termRows = stdout?.rows ?? 40;
   const visibleCount = Math.max(6, termRows - PAGE_MARGIN);
@@ -60,6 +77,8 @@ export function ModelPicker({
       const target = rows[focus];
       if (!target) return;
       if (target.kind === "effort") return onChoose({ kind: "effort", effort: target.effort });
+      if (target.kind === "thinking")
+        return onChoose({ kind: "thinking", thinkingOverride: target.thinkingOverride });
       return onChoose({ kind: "select", id: target.id });
     }
     if (!ev.input) return;
@@ -110,7 +129,9 @@ export function ModelPicker({
             <Text color={FG.meta}>
               {row.kind === "effort"
                 ? t("modelPicker.effortHeader")
-                : t("modelPicker.modelsHeader")}
+                : row.kind === "thinking"
+                  ? t("modelPicker.thinkingHeader")
+                  : t("modelPicker.modelsHeader")}
             </Text>
           </Box>
         ) : null;
@@ -121,6 +142,13 @@ export function ModelPicker({
               effort={row.effort}
               focused={focused}
               active={row.effort === currentEffort}
+            />
+          ) : row.kind === "thinking" ? (
+            <ThinkingRow
+              key={`t-${row.thinkingOverride}`}
+              thinkingOverride={row.thinkingOverride}
+              focused={focused}
+              active={row.thinkingOverride === currentThinking}
             />
           ) : (
             <ModelRow
@@ -165,6 +193,31 @@ function EffortRow({
         {effort.padEnd(8)}
       </Text>
       <Text color={FG.meta}>{t(`modelPicker.effortDesc.${effort}` as const)}</Text>
+      {active ? <Text color={TONE.brand}>{t("modelPicker.currentLabel")}</Text> : null}
+    </Box>
+  );
+}
+
+function ThinkingRow({
+  thinkingOverride,
+  focused,
+  active,
+}: {
+  thinkingOverride: ThinkingOverride;
+  focused: boolean;
+  active: boolean;
+}): React.ReactElement {
+  return (
+    <Box>
+      <Text color={focused ? TONE.brand : FG.faint}>{focused ? "  ▸ " : "    "}</Text>
+      <Text bold={focused} color={focused ? FG.strong : FG.sub}>
+        {thinkingOverride === "enabled" ? "on".padEnd(8) : "off".padEnd(8)}
+      </Text>
+      <Text color={FG.meta}>
+        {thinkingOverride === "enabled"
+          ? t("modelPicker.thinkingEnabled")
+          : t("modelPicker.thinkingDisabled")}
+      </Text>
       {active ? <Text color={TONE.brand}>{t("modelPicker.currentLabel")}</Text> : null}
     </Box>
   );

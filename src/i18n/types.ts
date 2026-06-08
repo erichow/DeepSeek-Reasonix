@@ -622,6 +622,9 @@ export interface TranslationSchema {
     modelsAvailable: string;
     effortHeader: string;
     modelsHeader: string;
+    thinkingHeader: string;
+    thinkingEnabled: string;
+    thinkingDisabled: string;
     effortDesc: Record<string, string>;
     pickerFooter: string;
     currentLabel: string;

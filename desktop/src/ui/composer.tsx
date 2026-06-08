@@ -779,19 +779,26 @@ export function Composer({
               >
                 <I.brain size={12} />
                 <span>{modelLabel}</span>
-                <span className="badge">{reasoningEffort}</span>
+                <span className="badge">
+                  {thinkingOverride === "disabled" ? t("statusbar.noThink") : reasoningEffort}
+                </span>
                 <I.chev size={10} />
               </button>
               {modelMenuOpen ? (
                 <ModelEffortMenu
                   modelLabel={modelLabel}
                   currentEffort={reasoningEffort}
+                  thinkingOverride={thinkingOverride}
                   onPickModel={(m) => {
                     onModelChange(m);
                     setModelMenuOpen(false);
                   }}
                   onPickEffort={(e) => {
                     onEffortChange(e);
+                    setModelMenuOpen(false);
+                  }}
+                  onThinkingToggle={() => {
+                    onThinkingToggle?.();
                     setModelMenuOpen(false);
                   }}
                 />
@@ -955,13 +962,17 @@ const KNOWN_MODELS: readonly string[] = ["deepseek-v4-flash", "deepseek-v4-pro"]
 function ModelEffortMenu({
   modelLabel,
   currentEffort,
+  thinkingOverride,
   onPickModel,
   onPickEffort,
+  onThinkingToggle,
 }: {
   modelLabel: string;
   currentEffort: ReasoningEffort;
+  thinkingOverride?: "enabled" | "disabled";
   onPickModel: (model: string) => void;
   onPickEffort: (effort: ReasoningEffort) => void;
+  onThinkingToggle?: () => void;
 }) {
   const [draft, setDraft] = useState(modelLabel);
   return (
@@ -1034,6 +1045,26 @@ function ModelEffortMenu({
             </div>
           </div>
         ))}
+      </div>
+      <div className="ph" style={{ marginTop: 4 }}>
+        <span className="tok">T</span>
+        <span>{t("settings.thinking")}</span>
+      </div>
+      <div className="popup-list">
+        <div
+          className="popup-item"
+          data-active={thinkingOverride !== "disabled"}
+          onClick={() => onThinkingToggle?.()}
+        >
+          <span className="ico">
+            <I.brain size={12} />
+          </span>
+          <div className="nm">
+            <span className="cmd">
+              {thinkingOverride === "disabled" ? t("statusbar.noThink") : t("settings.thinking")}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

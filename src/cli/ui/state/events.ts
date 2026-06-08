@@ -137,6 +137,11 @@ const sessionEffortChange = z.object({
   reasoningEffort: z.enum(["low", "medium", "high", "max"]),
 });
 
+const sessionThinkingChange = z.object({
+  type: z.literal("session.thinking.change"),
+  thinkingOverride: z.enum(["enabled", "disabled"]).optional(),
+});
+
 const mcpLoading = z.object({
   type: z.literal("mcp.loading"),
   ready: z.number().int().nonnegative(),
@@ -350,6 +355,7 @@ export const AgentEventSchema = z.discriminatedUnion("type", [
   sessionUpdate,
   sessionModelChange,
   sessionEffortChange,
+  sessionThinkingChange,
   mcpLoading,
   focusMove,
   focusSet,

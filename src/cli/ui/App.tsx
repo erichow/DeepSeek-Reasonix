@@ -498,6 +498,7 @@ function AppInner({
   const cardCount = useAgentState((s) => s.cards.length);
   const sessionModel = useAgentState((s) => s.session.model);
   const sessionEffort = useAgentState((s) => s.status.reasoningEffort);
+  const sessionThinkingOverride = useAgentState((s) => s.status.thinkingOverride);
   const ctxTokens = useAgentState((s) => s.status.promptTokens);
   const ctxCap = useAgentState((s) => s.status.promptCap ?? resolveContextTokens(s.session.model));
   const sessionCostUsd = useAgentState((s) => s.status.sessionCost);
@@ -4520,7 +4521,7 @@ function AppInner({
                           ? t("statsPanel.modeReview")
                           : editMode
                   }
-                  model={`${sessionModel}${loop.thinkingOverride === "disabled" ? ` \u00b7 ${t("statsPanel.noThink")}` : ` \u00b7 ${sessionEffort ?? loop.reasoningEffort}`}`}
+                  model={`${sessionModel}${sessionThinkingOverride === "disabled" ? ` \u00b7 ${t("statsPanel.noThink")}` : ` \u00b7 ${sessionEffort ?? loop.reasoningEffort}`}`}
                   input={input}
                   setInput={setInput}
                   busy={busy}
@@ -4704,6 +4705,7 @@ function AppInner({
                   models={models}
                   current={loop.model}
                   currentEffort={loop.reasoningEffort}
+                  currentThinking={loop.thinkingOverride}
                   effortChoices={effortChoices}
                   onRefresh={refreshModels}
                   onChoose={(outcome) => {
@@ -4731,6 +4733,15 @@ function AppInner({
                         /* disk full / perms — runtime change still took effect */
                       }
                       log.pushInfo(`effort: ${outcome.effort}`);
+                      return;
+                    }
+                    if (outcome.kind === "thinking") {
+                      loop.configure({ thinkingOverride: outcome.thinkingOverride });
+                      agentStore.dispatch({
+                        type: "session.thinking.change",
+                        thinkingOverride: outcome.thinkingOverride,
+                      });
+                      log.pushInfo(`thinking: ${outcome.thinkingOverride}`);
                     }
                   }}
                 />
@@ -4827,7 +4838,7 @@ function AppInner({
                           ? t("statsPanel.modeReview")
                           : editMode
                   }
-                  model={`${sessionModel}${loop.thinkingOverride === "disabled" ? ` \u00b7 ${t("statsPanel.noThink")}` : ` \u00b7 ${sessionEffort ?? loop.reasoningEffort}`}`}
+                  model={`${sessionModel}${sessionThinkingOverride === "disabled" ? ` \u00b7 ${t("statsPanel.noThink")}` : ` \u00b7 ${sessionEffort ?? loop.reasoningEffort}`}`}
                   input={input}
                   setInput={setInput}
                   busy={busy}

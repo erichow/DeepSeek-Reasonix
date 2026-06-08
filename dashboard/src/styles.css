@@ -3184,6 +3184,13 @@ html:not([data-platform="macos"]) .shortcut kbd[data-key="mod"] {
   background: var(--panel);
   color: var(--fg);
 }
+.composer-foot .thinking-toggle[data-off] {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+.composer-foot .thinking-toggle[data-off]:hover {
+  opacity: 0.7;
+}
 .composer-foot .cf-btn .ico {
   display: inline-flex;
 }

@@ -323,6 +323,7 @@ function emitServerSettings(settings: any, overview?: any): void {
   emitEvent({
     type: "$settings",
     tabId: "tab-1",
+    thinkingOverride: settings?.thinkingOverride ?? undefined,
     reasoningEffort: settings?.reasoningEffort ?? overview?.reasoningEffort ?? "high",
     editMode: settings?.editMode ?? overview?.editMode ?? "review",
     budgetUsd: settings?.budgetUsd ?? overview?.budgetUsd ?? null,
@@ -1090,6 +1091,7 @@ const mockSessions = [
 ];
 
 const mockSettings = {
+  thinkingOverride: undefined,
   reasoningEffort: "high",
   editMode: "review",
   budgetUsd: null,

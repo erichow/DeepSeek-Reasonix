@@ -47,6 +47,8 @@ export interface StatusBar {
   countdownSeconds?: number;
   recording?: { sizeBytes: number; events: number; path: string };
   reasoningEffort?: import("../../../config.js").ReasoningEffort;
+  /** Override chain-of-thought: "enabled" | "disabled", undefined = auto. */
+  thinkingOverride?: import("../../../config.js").ThinkingOverride;
   /** Bridged-MCP handshake progress. Pill is shown while ready < total. */
   mcpLoading?: { ready: number; total: number };
 }
