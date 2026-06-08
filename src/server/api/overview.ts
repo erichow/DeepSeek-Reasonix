@@ -61,7 +61,10 @@ export async function handleOverview(
     mcpServerCount: ctx.getMcpServers?.().length ?? null,
     toolCount: ctx.tools ? ctx.tools.size : null,
     reasoningEffort: isReasoningEffort(cfg.reasoningEffort) ? cfg.reasoningEffort : "high",
-    thinkingOverride: cfg.thinkingOverride === "enabled" || cfg.thinkingOverride === "disabled" ? cfg.thinkingOverride : null,
+    thinkingOverride:
+      cfg.thinkingOverride === "enabled" || cfg.thinkingOverride === "disabled"
+        ? cfg.thinkingOverride
+        : null,
     budgetUsd: ctx.loop?.budgetUsd ?? null,
     stats: ctx.getStats?.() ?? null,
     semanticIndexExists,

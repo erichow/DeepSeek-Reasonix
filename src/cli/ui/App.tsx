@@ -2224,6 +2224,7 @@ function AppInner({
   const startDashboard = useCallback(async (): Promise<string> => {
     if (dashboardRef.current) return dashboardRef.current.url;
     if (dashboardStartingRef.current) return dashboardStartingRef.current;
+    // broadcastDashboardEvent is stable ([] deps), listed for exhaustive-deps.
     const buildCtx = (): DashboardContext => {
       const ctx: DashboardContext = {
         mode: "attached",
@@ -2568,6 +2569,7 @@ function AppInner({
     dashboardPort,
     dashboardHost,
     dashboardToken,
+    broadcastDashboardEvent,
   ]);
 
   const stopDashboard = useCallback(async (): Promise<void> => {
