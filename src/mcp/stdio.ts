@@ -27,6 +27,68 @@ export interface StdioTransportOptions {
 }
 
 export class StdioTransport implements McpTransport {
+  /**
+   * Create a StdioTransport with exponential-backoff retry for transient
+   * spawn failures. Spawns the child; if the process exits immediately
+   * with a non-zero code or emits a transport error, retries up to
+   * `maxRetries` times (default 4, total 5 tries).
+   *
+   * Returns `null` if all attempts fail — caller should surface the
+   * last error to the user. The retry is suitable for servers that
+   * are still starting up (e.g. waiting on a port, compiling once).
+   */
+  static async spawnWithRetry(
+    opts: StdioTransportOptions,
+    maxRetries = 4,
+  ): Promise<{ transport: StdioTransport } | { error: string }> {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const result = await StdioTransport.trySpawn(opts);
+      if ("transport" in result) return result;
+      if (attempt < maxRetries) {
+        const delay = Math.min(500 * 2 ** attempt, 8_000);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+    return { error: `StdioTransport failed after ${maxRetries + 1} attempts` };
+  }
+
+  private static trySpawn(
+    opts: StdioTransportOptions,
+  ): Promise<{ transport: StdioTransport } | { error: string }> {
+    return new Promise((resolve) => {
+      const transport = new StdioTransport(opts);
+      // If the child exits quickly (e.g. command not found), catch it.
+      const onClose = () => {
+        if (transport.child.exitCode !== null && transport.child.exitCode !== 0) {
+          transport.cleanupListeners();
+          resolve({ error: `process exited with code ${transport.child.exitCode}` });
+        } else if (transport.child.exitCode === null) {
+          // Still running — resolve optimistically (handshake will validate).
+          transport.cleanupListeners();
+          resolve({ transport });
+        }
+      };
+      const onError = (err: Error) => {
+        transport.cleanupListeners();
+        resolve({ error: err.message });
+      };
+      transport.child.on("close", onClose);
+      transport.child.on("error", onError);
+      // If the child is still running after a tick, treat as success.
+      // The handshake in reconnectMcpServer will catch invalid servers.
+      setImmediate(() => {
+        if (transport.child.exitCode === null) {
+          transport.cleanupListeners();
+          resolve({ transport });
+        }
+      });
+    });
+  }
+
+  private cleanupListeners(): void {
+    this.child.removeAllListeners("close");
+    this.child.removeAllListeners("error");
+  }
   private readonly child: ChildProcess;
   private readonly queue: JsonRpcMessage[] = [];
   private readonly waiters: Array<(m: JsonRpcMessage | null) => void> = [];

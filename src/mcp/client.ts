@@ -192,6 +192,20 @@ export class McpClient {
     } satisfies GetPromptParams);
   }
 
+  /**
+   * Simple health check — sends a `ping` request with a short timeout.
+   * Returns `true` if the server responds, `false` on timeout / error.
+   * Does NOT throw — designed for periodic keepalive polling.
+   */
+  async ping(timeoutMs = 2_000): Promise<boolean> {
+    try {
+      await this.request("ping", {}, AbortSignal.timeout(timeoutMs));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   /** Close the transport and reject any outstanding requests. */
   async close(): Promise<void> {
     for (const [, pending] of this.pending) {

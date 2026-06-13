@@ -1,4 +1,8 @@
-/** `/mcp reconnect` — open a fresh client, accept identity (always) and append (opt-in), refuse the rest cleanly. */
+/** `/mcp reconnect` — open a fresh client, accept identity (always) and append (opt-in), refuse the rest cleanly.
+ *
+ * Top-level `reconnectMcpServer` auto-retries transient handshake failures with
+ * exponential backoff (500ms × 2^attempt, max 5 tries). Callers that need
+ * single-shot behavior with no retry can import `reconnectMcpServerOnce` directly. */
 
 import { McpClient } from "./client.js";
 import { classifyToolListDrift } from "./drift.js";
@@ -22,6 +26,8 @@ export interface ReconnectArgs {
   headers?: Record<string, string>;
   /** Per-request timeout override in ms. */
   requestTimeoutMs?: number;
+  /** Max connection retry attempts for transient handshake failures (default 4, i.e. 5 total tries). 0 = single-shot. */
+  maxRetries?: number;
 }
 
 export type ReconnectResult =
@@ -44,9 +50,40 @@ export type ReconnectResult =
         | "drift_removed";
       message: string;
       ms: number;
+      /** Number of retry attempts made before final failure. */
+      retries?: number;
     };
 
+/**
+ * Reconnect to an MCP server with exponential-backoff retry for transient
+ * handshake failures. Default: up to 5 total tries (4 retries).
+ */
 export async function reconnectMcpServer(args: ReconnectArgs): Promise<ReconnectResult> {
+  const t0 = Date.now();
+  const maxRetries = args.maxRetries ?? 4;
+  let lastResult: ReconnectResult | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    lastResult = await reconnectMcpServerOnce(args, attempt === 0);
+    if (lastResult.ok) return lastResult;
+    // Retry only on handshake failures — spec_parse and drift errors are
+    // non-transient and should surface immediately.
+    if (lastResult.reason !== "handshake") return lastResult;
+    if (attempt < maxRetries) {
+      // Exponential backoff: 500ms, 1s, 2s, 4s, capped at 8s.
+      const delay = Math.min(500 * 2 ** attempt, 8_000);
+      await sleep(delay);
+    }
+  }
+
+  return { ...lastResult!, retries: maxRetries };
+}
+
+/** Single-shot reconnect with no retry — one attempt, surface failure immediately. */
+export async function reconnectMcpServerOnce(
+  args: ReconnectArgs,
+  firstAttempt = true,
+): Promise<ReconnectResult> {
   const t0 = Date.now();
   const accept = args.accept ?? ["identity"];
   let parsed: McpSpec;
@@ -111,6 +148,10 @@ export async function reconnectMcpServer(args: ReconnectArgs): Promise<Reconnect
       ms: Date.now() - t0,
     };
   }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function driftReason(

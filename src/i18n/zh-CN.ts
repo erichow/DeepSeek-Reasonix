@@ -1051,6 +1051,9 @@ export const zhCN: TranslationSchema = {
       effortUsage: "用法：/effort <{list}>   （high 为安全默认；max 是 DeepSeek 扩展）",
       effortUsageNoMax: "用法：/effort <{list}>",
       effortSet: "effort → {effort}",
+      thinkingStatus: "思考 → {status}   （/thinking on|off 切换）",
+      thinkingUsage: "用法：/thinking <on|off>   （关闭 = 更快/更便宜，无思维链）",
+      thinkingSet: "思考 → {value}",
       budgetNoCap:
         "未设置会话预算 — Reasonix 将持续运行直到您停止。使用以下方式设置：/budget <usd>   （例如 /budget 5）",
       budgetStatus: "预算：${spent} / ${cap}（{pct}%）· /budget off 清除，/budget <usd> 更改",
