@@ -508,6 +508,27 @@ program
   });
 
 program
+  .command("import-sessions")
+  .description("Import a session from Claude Code or Codex.")
+  .requiredOption("-s, --source <source>", 'source format: "claude" or "codex"')
+  .requiredOption("-p, --path <path>", "path to the external session file")
+  .option("-n, --name <name>", "session name (default: auto-generated)")
+  .option("-w, --workspace <path>", "workspace directory (default: none)")
+  .option("--summary <text>", "one-line summary")
+  .option("-f, --force", "overwrite if session name already exists")
+  .action(async (opts) => {
+    const { importSessionsCommand } = await import("./commands/import-sessions.js");
+    importSessionsCommand({
+      source: opts.source,
+      path: opts.path,
+      name: opts.name,
+      workspace: opts.workspace,
+      summary: opts.summary,
+      force: !!opts.force,
+    });
+  });
+
+program
   .command("prune-sessions")
   .description(t("cli.pruneSessions"))
   .option("--days <n>", t("ui.pruneDaysHint"), (v) => Number.parseInt(v, 10))
