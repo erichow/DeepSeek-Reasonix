@@ -4,7 +4,7 @@ import { Box, Text } from "ink";
 import React from "react";
 import { t } from "../../i18n/index.js";
 import type { TranscriptRecord } from "../../transcript/log.js";
-import { FG } from "./theme/tokens.js";
+import { FG, formatCost } from "./theme/tokens.js";
 
 export interface RecordViewProps {
   rec: TranscriptRecord;
@@ -44,10 +44,7 @@ export function RecordView({ rec, compact = false }: RecordViewProps) {
             {t("recordView.assistant")}
           </Text>
           {rec.cost !== undefined ? (
-            <Text color={FG.faint}>
-              {"  $"}
-              {rec.cost.toFixed(6)}
-            </Text>
+            <Text color={FG.faint}>{`  ${formatCost(rec.cost, "USD", 6)}`}</Text>
           ) : null}
           {rec.usage ? <CacheBadge usage={rec.usage} /> : null}
         </Box>

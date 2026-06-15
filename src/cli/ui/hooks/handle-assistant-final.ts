@@ -92,6 +92,7 @@ export function handleAssistantFinal(ev: LoopEvent, ctx: AssistantFinalContext):
     ctx.translator.turnEnd(ev.stats, ctx.streamRef.reasoning, {
       promptCap: ctx.ctxMax > 0 ? ctx.ctxMax : undefined,
       sessionCacheHit: ctx.getSessionSummary().cacheHitRatio,
+      elapsedMs: ctx.translator.turnElapsedMs,
     });
     if (ctx.ctxMax > 0) {
       ctx.log.pushCtxPressureIfHigh(ev.stats.usage.promptTokens, ctx.ctxMax);

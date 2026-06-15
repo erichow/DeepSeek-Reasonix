@@ -798,6 +798,7 @@ export interface TranslationSchema {
     tools: string;
     log: string;
     input: string;
+    totalCost: string;
     topTools: string;
     logMsgs: string;
     hitSingular: string;

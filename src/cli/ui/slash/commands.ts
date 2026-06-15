@@ -49,7 +49,12 @@ export const SLASH_COMMANDS: readonly SlashCommandSpec[] = [
     cmd: "new",
     group: "chat",
     summary: "start a fresh conversation (clear context + scrollback)",
-    aliases: ["reset", "clear"],
+    aliases: ["reset"],
+  },
+  {
+    cmd: "clear",
+    group: "chat",
+    summary: "clear the current session context in-place (same session, no archive)",
   },
   { cmd: "retry", group: "chat", summary: "truncate & resend your last message (fresh sample)" },
   {
@@ -87,9 +92,9 @@ export const SLASH_COMMANDS: readonly SlashCommandSpec[] = [
   {
     cmd: "effort",
     group: "setup",
-    argsHint: "<low|medium|high|max>",
+    argsHint: "<auto|low|medium|high|max>",
     summary:
-      "reasoning_effort cap — high is the safe default (vLLM/Azure compatible); max is a DeepSeek extension.",
+      "reasoning_effort cap — auto selects per-turn heuristically; high is the safe vLLM/Azure default; max is a DeepSeek extension.",
     argCompleter: ["low", "medium", "high", "max"],
   },
   {

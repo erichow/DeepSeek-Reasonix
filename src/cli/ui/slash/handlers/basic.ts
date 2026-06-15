@@ -21,6 +21,13 @@ const resetLog: SlashHandler = (_args, loop) => {
   return { clear: true, info };
 };
 
+/** `/clear` — same as /new but rewrites the session in place (no archival) so the current session name survives. */
+const clearContext: SlashHandler = (_args, loop) => {
+  const { dropped } = loop.clearLog(false);
+  const info = t("handlers.basic.clearInfo", { count: dropped });
+  return { clear: true, info };
+};
+
 function groupHeader(group: SlashGroup): string {
   const cap = group.charAt(0).toUpperCase() + group.slice(1);
   const label = t(`slashSuggestions.group${cap}`);
@@ -165,6 +172,7 @@ const about: SlashHandler = () => {
 export const handlers: Record<string, SlashHandler> = {
   exit,
   new: resetLog,
+  clear: clearContext,
   help,
   retry,
   loop,

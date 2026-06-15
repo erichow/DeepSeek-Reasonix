@@ -1,4 +1,5 @@
 import type { TurnStats } from "../../../telemetry/stats.js";
+import { inputCostUsd, outputCostUsd } from "../../../telemetry/stats.js";
 import type { Scrollback } from "../hooks/useScrollback.js";
 
 export class TurnTranslator {
@@ -6,18 +7,32 @@ export class TurnTranslator {
   private streamingCardId: string | null = null;
   private toolCardId: string | null = null;
   private toolStartedAt = 0;
+  /** Timestamp (epoch ms) when the model first produced output this turn. */
+  private turnStartedAt = 0;
 
   constructor(private readonly log: Scrollback) {}
 
-  flushBuffers(reasoningChunk: string, contentChunk: string, model?: string): void {
+  flushBuffers(
+    reasoningChunk: string,
+    contentChunk: string,
+    model?: string,
+    resolvedEffort?: "low" | "medium" | "high" | "max",
+  ): void {
+    if (!this.turnStartedAt) this.turnStartedAt = Date.now();
     if (reasoningChunk) {
-      if (!this.reasoningCardId) this.reasoningCardId = this.log.startReasoning(model);
+      if (!this.reasoningCardId)
+        this.reasoningCardId = this.log.startReasoning(model, resolvedEffort);
       this.log.appendReasoning(this.reasoningCardId, reasoningChunk);
     }
     if (contentChunk) {
       if (!this.streamingCardId) this.streamingCardId = this.log.startStreaming(model);
       this.log.appendStreaming(this.streamingCardId, contentChunk);
     }
+  }
+
+  /** Wall-clock ms since the model first produced output this turn, or 0 if not yet started. */
+  get turnElapsedMs(): number {
+    return this.turnStartedAt > 0 ? Date.now() - this.turnStartedAt : 0;
   }
 
   toolStart(name: string, args: unknown, callId?: string): void {
@@ -71,13 +86,23 @@ export class TurnTranslator {
     reasoningText: string,
     extras?: { promptCap?: number; elapsedMs?: number; sessionCacheHit?: number },
   ): void {
+    const outputTokens = stats.usage.completionTokens;
+    const reasonTokens = Math.round(reasoningText.length / 4);
+    // Input (prompt) cost → UserCard; reasoning output cost → ReasoningCard;
+    // reply output cost → StreamingCard; all three add up to total cost.
+    const inputCost = inputCostUsd(stats.model, stats.usage);
+    const outputCost = outputCostUsd(stats.model, stats.usage);
+    const reasonOutputCost =
+      outputTokens > 0 && reasonTokens > 0 ? (outputCost * reasonTokens) / outputTokens : 0;
     this.log.endTurn(
       {
         prompt: stats.usage.promptTokens,
-        reason: Math.round(reasoningText.length / 4),
-        output: stats.usage.completionTokens,
+        reason: reasonTokens,
+        output: outputTokens,
         cacheHit: stats.cacheHitRatio,
         cost: stats.cost,
+        inputCost,
+        reasonCost: reasonOutputCost,
       },
       extras,
     );

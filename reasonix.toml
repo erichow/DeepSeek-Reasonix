@@ -1,0 +1,159 @@
+# Reasonix configuration.
+# Resolution order: flag > ./reasonix.toml > ~/Library/Application Support/reasonix/config.toml > built-in defaults.
+# Secrets come from the environment via api_key_env; never put keys here.
+
+config_version = 2   # schema marker for diagnostics; old versions may ignore it
+default_model = "deepseek-flash"
+# language      = "zh"   # ui/model language; empty = auto-detect from $LANG / $REASONIX_LANG
+
+[ui]
+theme = "dark"   # auto|dark|light; CLI colors only; REASONIX_THEME can override per run
+theme_style = "aurora"   # CLI accent palette; REASONIX_THEME_STYLE can override per run
+# shortcut_layout = "desktop"   # classic|desktop; compatibility setting; Shift+Tab toggles Plan, Ctrl+Y toggles YOLO
+show_reasoning = true   # CLI: show thinking text by default; false = collapsed (toggle with Ctrl+O)
+
+[network]
+proxy_mode = "auto"   # auto|env|custom|off; auto currently uses env proxy
+# proxy_url  = "socks5://127.0.0.1:7890"   # optional custom override
+# no_proxy   = "localhost,127.0.0.1,.local"   # honored for proxy_mode = "custom"
+
+[network.proxy]
+type = "socks5"   # http|https|socks5|socks5h
+# server = "127.0.0.1"
+# port = 7890
+# username = ""
+# password = "${REASONIX_PROXY_PASSWORD}"   # optional; supports ${VAR} expansion
+
+[agent]
+system_prompt = """
+You are Reasonix, a coding agent focused on executing code tasks.
+Use the provided tools to read and write files and run shell commands.
+Principles: understand the request before acting; verify with tools instead of
+guessing; keep changes minimal and correct; briefly summarize what you did.
+When the request leaves a real choice to the user — which approach or library,
+the scope, or a consequential or ambiguous decision — call the ask tool to offer
+2-4 concrete options rather than guessing or burying the question in prose. Skip
+it when there's an obvious default; don't ask just to confirm.
+For multi-step work, track progress with the todo_write tool: lay out the steps,
+keep exactly one in_progress, and flip each to completed as you finish it — update
+the list as you go, not just at the end.
+In plan mode the harness blocks writer tools: do read-only research, then write a
+concise plan as your reply and stop. The user is asked to approve before anything
+is changed; once approved, work through the steps, updating the task list as you go."""
+# system_prompt_file = "prompts/system.md"   # overrides system_prompt when set
+max_steps         = 0   # executor tool-call rounds; 0 = no limit
+planner_max_steps = 12   # planner read-only tool-call rounds; 0 = no limit
+temperature       = 0.0
+auto_plan   = "off"   # off|on; off keeps plan mode manual
+# reasoning_language = "zh"   # visible reasoning language: auto|zh|en
+# auto_plan_classifier = "deepseek-flash"   # optional; only used for borderline tasks
+soft_compact_ratio  = 0.5   # notice only; keeps cache-first prefix intact
+compact_ratio       = 0.8   # try compacting when prompt reaches this fraction
+compact_force_ratio = 0.9   # force compacting at this high-water mark
+cold_resume_prune   = true   # elide stale tool results when reopening a session past the provider cache window
+# planner_model = "mimo"   # optional: enable two-model collaboration
+# subagent_model = "deepseek-pro"   # optional default for runAs=subagent skills
+# subagent_models = { review = "deepseek-pro", security_review = "deepseek-pro" }   # per-skill overrides
+# subagent_effort = "high"   # optional default effort for subagents
+# subagent_efforts = { review = "max", task = "high" }   # per-tool/skill effort overrides
+# output_style = "explanatory"   # explanatory | learning | concise | custom; empty = default
+
+[tools]
+enabled = []   # empty = all built-in tools
+bash_timeout_seconds = 120   # foreground safety cap; set 0 for no tool-local cap
+
+[codegraph]
+enabled      = true   # built-in MCP server; off by default for first-run sessions
+auto_install = true   # fetch the runtime when CodeGraph is enabled but missing
+# path       = ""   # empty = cache, then PATH, then a bundle beside reasonix
+
+[builtin_mcp]
+time_enabled = true   # built-in Time MCP; off until manually enabled
+context7_enabled = false   # built-in Context7 MCP; off until manually enabled
+
+[lsp]
+enabled = true   # language server tools; servers launch lazily when used
+# [lsp.servers.go]
+# command = "gopls"
+# args = []
+# extensions = [".go"]
+
+[skills]
+# paths = ["~/my-skills", "../shared/skills"]   # extra custom skill roots
+# excluded_paths = ["~/.agents/skills"]   # hide convention roots without deleting folders
+# max_depth = 3   # nested scan depth; set 1 for legacy root-only discovery
+# disabled_skills = ["review"]   # hide noisy or unwanted skills
+
+[permissions]
+# Per-call gating. mode = writer fallback when no rule matches: ask|allow|deny.
+# Readers always default to allow. Precedence: deny > ask > allow > fallback.
+# Rules are "Tool" or "Tool(specifier)"; e.g. Bash(go test:*), Edit(src/**).
+mode  = "ask"
+# deny = ["Bash(rm -rf*)", "Bash(git push*)"]   # hard-blocked in every mode
+allow = ["Edit", "Bash(cd /Users/mac/Documents/DeepSeek-Reasonix && npm run build 2>&1 | tail -30)", "Bash(cd /Users/mac/Documents/DeepSeek-Reasonix && npx biome check src/cli/ui/cards/ReasoningCard.tsx src/cli/ui/cards/StreamingCard.tsx 2>&1 | head -30)", "Bash(cd /Users/mac/Documents/DeepSeek-Reasonix && npx biome check --write src/cli/ui/cards/ReasoningCard.tsx src/cli/ui/cards/StreamingCard.tsx 2>&1 | head -10)", "Bash(cd /Users/mac/Documents/DeepSeek-Reasonix && npx tsc --noEmit 2>&1 | head -20)", "Bash(cd /Users/mac/Documents/DeepSeek-Reasonix && npx biome check src/cli/ui/cards/ReasoningCard.tsx src/cli/ui/cards/StreamingCard.tsx 2>&1)", "Bash(sed -n '1637,1642p' src/i18n/EN.ts | cat -A)", "Bash(sed -n '1637,1642p' src/i18n/EN.ts | cat -vet)"]
+# ask = ["Edit(src/**)"]   # force a prompt even if otherwise allowed
+
+[sandbox]
+# Confine tool blast radius. File-writers (write_file/edit_file/multi_edit)
+# may only write under workspace_root (empty = current dir) + allow_write.
+# bash = "enforce" (default) jails each command in an OS sandbox (macOS now;
+# graceful fallback elsewhere); "off" disables it. network allows egress.
+# workspace_root = ""            # default: current working directory
+# allow_write = ["/tmp"]          # extra dirs writers may also modify
+bash    = "enforce"
+network = true
+
+[statusline]
+# A custom status line: a command whose first stdout line replaces the built-in
+# data row. It receives {"model","contextUsed","contextWindow","cwd"} as JSON on stdin.
+# command = "my-statusline.sh"
+
+# Bot gateway: multi-channel IM bot for QQ, Feishu/Lark, and WeChat.
+[bot]
+enabled = false
+# model = ""   # empty = default_model
+tool_approval_mode = "ask"   # ask|auto|yolo; yolo skips tool approvals only
+max_steps = 25
+debounce_ms = 1500
+
+[bot.allowlist]
+enabled = true
+allow_all = false
+qq_users = []
+feishu_users = []
+weixin_users = []
+qq_groups = []
+feishu_groups = []
+weixin_groups = []
+
+[bot.qq]
+enabled = false
+app_id = ""
+app_secret_env = "QQ_BOT_APP_SECRET"
+
+[bot.feishu]
+enabled = false
+app_id = ""
+domain = "feishu"
+app_secret_env = "FEISHU_BOT_APP_SECRET"
+verification_token = ""
+mode = "webhook"
+webhook_port = 8080
+require_mention = true
+
+[bot.weixin]
+enabled = false
+account_id = "default"
+token_env = "WEIXIN_BOT_TOKEN"
+api_base = "https://ilinkai.weixin.qq.com"
+
+# External MCP servers. type: "stdio" (default, a subprocess) | "http" | "sse".
+# ${VAR} / ${VAR:-default} are expanded from the environment in command/args/env/url/headers.
+# [[plugins]]
+# name    = "example"
+# command = "reasonix-plugin-example"
+# [[plugins]]                                  # a remote server over Streamable HTTP
+# name    = "stripe"
+# type    = "http"
+# url     = "https://mcp.stripe.com"
+# headers = { Authorization = "Bearer ${STRIPE_KEY}" }

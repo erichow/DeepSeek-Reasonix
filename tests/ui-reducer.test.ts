@@ -413,6 +413,33 @@ describe("ui reducer", () => {
     expect(s.status.balanceCurrency).toBe("CNY");
   });
 
+  it("turn.end keeps turnCostUsd as reply cost when thinking is off (no ReasoningCard); roundCostUsd includes total", () => {
+    const s = run([
+      { type: "streaming.start", id: "s1" },
+      { type: "streaming.chunk", id: "s1", text: "direct answer" },
+      { type: "streaming.end", id: "s1" },
+      {
+        type: "turn.end",
+        usage: {
+          prompt: 1000,
+          reason: 0,
+          output: 200,
+          cacheHit: 0.8,
+          cost: 0.0015,
+          inputCost: 0.001,
+          reasonCost: 0,
+        },
+      },
+    ]);
+    const card = s.cards[s.cards.length - 1] as StreamingCard;
+    // turnCostUsd is replyCost only (cost - inputCost - reasonCost)
+    expect(card.turnCostUsd).toBeCloseTo(0.0005);
+    // roundCostUsd includes the full cost (inputCost + replyCost)
+    expect(card.roundCostUsd).toBeCloseTo(0.0015);
+    expect(card.turnPromptTokens).toBe(1000);
+    expect(card.turnCompletionTokens).toBe(200);
+  });
+
   it("focus.move walks cards forward and back, clamped at edges", () => {
     let s = run([
       { type: "user.submit", text: "a" },

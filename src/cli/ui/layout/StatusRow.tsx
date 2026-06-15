@@ -95,8 +95,8 @@ export function StatusRow({
               <Text bold color={TONE.brand}>
                 {"▸ "}
               </Text>
-              <Text bold color={FG.body}>
-                {`${formatCost(status.cost, status.costDisplayCurrency ?? status.balanceCurrency)} ${t("statusBar.turn")}`}
+              <Text bold color={TONE.warn}>
+                {`${formatCost(status.cost, status.costDisplayCurrency ?? status.balanceCurrency)} ${t("statusBar.turn")}${status.lastTurnMs > 0 ? ` · ${(status.lastTurnMs / 1000).toFixed(1)}s` : ""}`}
               </Text>
             </Pill>
           </>

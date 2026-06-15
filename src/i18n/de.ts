@@ -79,13 +79,13 @@ export const de: TranslationSchema = {
     budgetHint: "Sitzungs-USD-Obergrenze – warnt bei 80 %, verweigert den nächsten Zug bei 100 %",
     modelIdHint: "DeepSeek-Modell-ID (z. B. deepseek-v4-flash)",
     systemPromptHint: "den Standard-System-Prompt überschreiben",
-    effortHint: "Reasoning-Effort – niedrig|mittel|hoch|maximal",
+    effortHint: "Reasoning-Effort – auto|niedrig|mittel|hoch|maximal",
     sessionNameHint: "Sitzungsname (Standard: „default“)",
     ephemeralHint: "Sitzungsspeicherung für diesen Durchlauf deaktivieren",
     mcpSpecHint: "MCP-Server-Spezifikation (wiederholbar)",
     mcpPrefixHint: "Präfix für MCP-Toolnamen",
     noConfigHint: "Ignoriere bei diesem Durchlauf die Datei ~/.reasonix/config.json",
-    effortHintShort: "Reasoning-Effort – niedrig|mittel|hoch|maximal",
+    effortHintShort: "Reasoning-Effort – auto|niedrig|mittel|hoch|maximal",
     budgetHintShort: "Sitzungs-USD-Obergrenze",
     transcriptHintShort: "Pfad zum JSONL-Transkript",
     mcpSpecHintShort: "MCP-Server-Spezifikation (wiederholbar)",
@@ -185,9 +185,9 @@ export const de: TranslationSchema = {
     status: { ...EN.slash.status, description: "Aktuelles Modell, Flags, Kontext und Sitzung" },
     effort: {
       ...EN.slash.effort,
-      argsHint: "<niedrig|mittel|hoch|max>",
+      argsHint: "<auto|niedrig|mittel|hoch|max>",
       description:
-        "Reasoning-Effort-Grenze (low|medium|high|max); high ist der sichere Standard für vLLM/Azure",
+        "Reasoning-Effort-Grenze (auto|low|medium|high|max); auto ist der neue Standard — Pro-Turn-Heuristik",
     },
     model: {
       ...EN.slash.model,
@@ -1030,7 +1030,7 @@ export const de: TranslationSchema = {
       modelSet: "Modell → {id}",
       effortStatus: "Effort → {current}   (Auswahl: {list})",
       effortUsage:
-        "Verwendung: /effort <{list}>   (high ist der sichere Standard; max ist eine DeepSeek-Erweiterung)",
+        "Verwendung: /effort <{list}>   (auto ist der neue Standard; max ist eine DeepSeek-Erweiterung)",
       effortUsageNoMax: "Verwendung: /effort <{list}>",
       effortSet: "Effort → {effort}",
       budgetNoCap:
@@ -1817,6 +1817,7 @@ export const de: TranslationSchema = {
     tools: "Tools",
     log: "Log",
     input: "Eingabe",
+    totalCost: "Gesamt",
     topTools: "Top-Tools",
     logMsgs: "Log-Nachr",
     hitSingular: "{count} Treffer · {files} Datei",

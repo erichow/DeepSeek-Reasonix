@@ -67,7 +67,7 @@ export interface Scrollback {
     topTools: ReadonlyArray<{ name: string; tokens: number; turn: number }>;
   }): string;
 
-  startReasoning(model?: string): string;
+  startReasoning(model?: string, resolvedEffort?: "low" | "medium" | "high" | "max"): string;
   appendReasoning(id: string, chunk: string): void;
   endReasoning(id: string, paragraphs: number, tokens: number, aborted?: boolean): void;
 
@@ -93,6 +93,8 @@ export interface Scrollback {
       output: number;
       cacheHit: number;
       cost: number;
+      inputCost: number;
+      reasonCost: number;
     },
     extras?: { promptCap?: number; elapsedMs?: number; sessionCacheHit?: number },
   ): void;
@@ -249,9 +251,14 @@ export function useScrollback(): Scrollback {
         dispatch({ type: "ctx.show", id, ...args, topTools: [...args.topTools] });
         return id;
       },
-      startReasoning(model) {
+      startReasoning(model, resolvedEffort) {
         const id = nextId("r");
-        dispatch({ type: "reasoning.start", id, ...(model ? { model } : {}) });
+        dispatch({
+          type: "reasoning.start",
+          id,
+          ...(model ? { model } : {}),
+          ...(resolvedEffort ? { resolvedEffort } : {}),
+        });
         return id;
       },
       appendReasoning(id, chunk) {

@@ -36,7 +36,7 @@ const effort: SlashHandler = (args, loop, ctx) => {
   const choices = effortChoicesForBaseUrl(loop.client.baseUrl);
   const list = choices.join(" | ");
   const usageKey =
-    choices.length === 4 ? "handlers.model.effortUsage" : "handlers.model.effortUsageNoMax";
+    choices.length === 5 ? "handlers.model.effortUsage" : "handlers.model.effortUsageNoMax";
   const raw = (args[0] ?? "").toLowerCase();
   if (raw === "") {
     return {

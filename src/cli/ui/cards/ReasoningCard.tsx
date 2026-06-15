@@ -1,14 +1,15 @@
 import { Box, Text, useStdout } from "ink";
 import React from "react";
 import { t } from "../../../i18n/index.js";
+import { useContentWidth } from "../content-width.js";
 import { Card } from "../primitives/Card.js";
 import { CursorBlock } from "../primitives/CursorBlock.js";
-import { Pill, modelBadgeFor, pillModel } from "../primitives/Pill.js";
+import { modelBadgeFor } from "../primitives/Pill.js";
 import { PULSE_DIAMOND, Pulse } from "../primitives/Pulse.js";
 import type { ReasoningCard as ReasoningCardData } from "../state/cards.js";
 import { VerboseContext } from "../state/verbose-context.js";
 import { clipToCells } from "../text-width.js";
-import { FG, TONE, TONE_ACTIVE } from "../theme/tokens.js";
+import { FG, TONE, TONE_ACTIVE, formatCost } from "../theme/tokens.js";
 import { useIncrementalWrap } from "./useIncrementalWrap.js";
 
 const STREAMING_PREVIEW_LINES = 3;
@@ -25,7 +26,7 @@ export function ReasoningCard({
   expanded: boolean;
 }): React.ReactElement {
   const { stdout } = useStdout();
-  const cols = stdout?.columns ?? 80;
+  const cols = useContentWidth() || (stdout?.columns ?? 80);
   const lineCells = Math.max(20, cols - 4);
   const verbose = React.useContext(VerboseContext);
 
@@ -75,6 +76,16 @@ function ReasoningHeader({
   const metaTrail = metaParts.length > 0 ? ` · ${metaParts.join(" · ")}` : "";
   const collapsedHint = !expanded && card.text.length > 0 ? "  (⌃o to expand)" : "";
   const modelBadge = card.model ? modelBadgeFor(card.model) : null;
+  const settledCost =
+    !card.streaming &&
+    (card.inputCostUsd !== undefined || card.reasonCostUsd !== undefined) &&
+    card.inputCostUsd! + card.reasonCostUsd! > 0;
+  const effortLabel =
+    card.reasoningEffort === "auto" && card.resolvedReasoningEffort
+      ? `auto (${card.resolvedReasoningEffort})`
+      : card.reasoningEffort === "auto"
+        ? "auto"
+        : null;
   return (
     <Box flexDirection="row" gap={1}>
       <Pulse
@@ -87,7 +98,30 @@ function ReasoningHeader({
         {`${baseTitle}${metaTrail}${collapsedHint}`}
       </Text>
       {modelBadge ? (
-        <Pill label={modelBadge.label} {...pillModel()[modelBadge.kind]} bold={false} />
+        <>
+          <Text color={FG.faint}>·</Text>
+          <Text italic color={FG.sub}>
+            {modelBadge.label}
+          </Text>
+        </>
+      ) : null}
+      {effortLabel ? (
+        <>
+          <Text color={FG.faint}>·</Text>
+          <Text color={FG.meta}>{effortLabel}</Text>
+        </>
+      ) : null}
+      {settledCost ? (
+        <>
+          <Text color={FG.faint}>·</Text>
+          <Text bold color={TONE.warn}>
+            {t("cardLabels.input")} {formatCost(card.inputCostUsd!)}
+          </Text>
+          <Text color={FG.faint}>·</Text>
+          <Text bold color={TONE.warn}>
+            {t("cardLabels.output")} {formatCost(card.reasonCostUsd!)}
+          </Text>
+        </>
       ) : null}
     </Box>
   );
@@ -106,7 +140,7 @@ function headerMeta(card: ReasoningCardData): string {
 function headerDuration(card: ReasoningCardData): string {
   if (card.streaming || !card.endedAt) return "";
   const seconds = Math.max(0, (card.endedAt - card.ts) / 1000);
-  return `${seconds.toFixed(1)}s`;
+  return `${seconds.toFixed(1)}秒`;
 }
 
 interface BodyProps {

@@ -54,4 +54,7 @@ export interface LoopEvent {
   };
   /** Display-only — code-mode applier MUST skip SEARCH/REPLACE in forced-summary text. */
   forcedSummary?: boolean;
+  /** Concrete reasoning effort selected for this iteration (always set when
+   *  reasoning is in play; resolves "auto" to a value like "high"). */
+  resolvedEffort?: "low" | "medium" | "high" | "max";
 }

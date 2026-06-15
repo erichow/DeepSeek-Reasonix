@@ -19,7 +19,7 @@ import {
   findPrevDivergence,
 } from "../../transcript/diff.js";
 import { RecordView } from "./RecordView.js";
-import { FG } from "./theme/tokens.js";
+import { FG, TONE, formatCost } from "./theme/tokens.js";
 
 export interface DiffAppProps {
   report: DiffReport;
@@ -152,9 +152,9 @@ function DiffHeader({ report }: { report: DiffReport }) {
         </Text>
         <Text>
           <Text color={FG.faint}>cost </Text>
-          <Text>${a.stats.totalCostUsd.toFixed(6)}</Text>
+          <Text color={TONE.warn}>{formatCost(a.stats.totalCostUsd, "USD", 6)}</Text>
           <Text color={FG.faint}> → </Text>
-          <Text>${b.stats.totalCostUsd.toFixed(6)}</Text>
+          <Text color={TONE.warn}>{formatCost(b.stats.totalCostUsd, "USD", 6)}</Text>
           <Text color={costDelta <= 0 ? "ansi:green" : "ansi:red"} bold>
             {"  "}
             {costDelta >= 0 ? "+" : ""}

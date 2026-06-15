@@ -60,7 +60,7 @@ export async function handleOverview(
     pendingEdits: ctx.getPendingEditCount?.() ?? null,
     mcpServerCount: ctx.getMcpServers?.().length ?? null,
     toolCount: ctx.tools ? ctx.tools.size : null,
-    reasoningEffort: isReasoningEffort(cfg.reasoningEffort) ? cfg.reasoningEffort : "high",
+    reasoningEffort: isReasoningEffort(cfg.reasoningEffort) ? cfg.reasoningEffort : "auto",
     thinkingOverride:
       cfg.thinkingOverride === "enabled" || cfg.thinkingOverride === "disabled"
         ? cfg.thinkingOverride

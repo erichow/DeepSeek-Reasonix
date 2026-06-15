@@ -16,7 +16,7 @@ import type { AgentState, Toast } from "./state.js";
 export function reduce(state: AgentState, event: AgentEvent): AgentState {
   switch (event.type) {
     case "user.submit":
-      return appendCard(state, makeUserCard(event.text));
+      return { ...appendCard(state, makeUserCard(event.text)), roundCost: 0 };
 
     case "turn.start":
       return { ...state, turnInProgress: true };
@@ -28,7 +28,15 @@ export function reduce(state: AgentState, event: AgentEvent): AgentState {
       );
 
     case "reasoning.start":
-      return appendCard(state, makeReasoningCard(event.id, event.model ?? state.session.model));
+      return appendCard(
+        state,
+        makeReasoningCard({
+          id: event.id,
+          model: event.model ?? state.session.model,
+          reasoningEffort: state.status.reasoningEffort,
+          resolvedReasoningEffort: event.resolvedEffort,
+        }),
+      );
 
     case "reasoning.chunk":
       return mutateCard(state, event.id, "reasoning", (c) => ({ ...c, text: c.text + event.text }));
@@ -94,11 +102,72 @@ export function reduce(state: AgentState, event: AgentEvent): AgentState {
 
     case "turn.end": {
       const sessionCost = state.status.sessionCost + event.usage.cost;
+      const roundCost = state.roundCost + event.usage.cost;
       const sessionInputTokens = state.status.sessionInputTokens + event.usage.prompt;
       const sessionOutputTokens = state.status.sessionOutputTokens + event.usage.output;
+      // Compute cached/new prompt breakdown from cache hit ratio.
+      const promptCacheHit = Math.round(event.usage.prompt * event.usage.cacheHit);
+      const promptCacheMiss = event.usage.prompt - promptCacheHit;
+      // inputCost + reasonCost → ReasoningCard, rest → StreamingCard.
+      // When thinking is off there's no ReasoningCard, so inputCost is
+      // stamped on the UserCard instead (see further down).
+      const replyCost = event.usage.cost - event.usage.inputCost - event.usage.reasonCost;
+      let cards = state.cards;
+      // NOTE: UserCard gets inputCost (below) only when thinking is off —
+      // when thinking is on, input cost is grouped into the ReasoningCard.
+      // Stamp reply cost + round total on the latest StreamingCard.
+      let foundReasoning = false;
+      for (let i = cards.length - 1; i >= 0; i--) {
+        const c = cards[i];
+        if (c?.kind === "streaming") {
+          cards = cards.with(i, {
+            ...c,
+            turnCostUsd: replyCost,
+            roundCostUsd: roundCost,
+            turnDurationMs: event.elapsedMs,
+            turnPromptTokens: event.usage.prompt,
+            turnCacheHitTokens: promptCacheHit,
+            turnCacheMissTokens: promptCacheMiss,
+            turnCompletionTokens: event.usage.output,
+            turnReasoningTokens: event.usage.reason,
+          });
+          break;
+        }
+      }
+      // Stamp context + reasoning cost on the latest ReasoningCard.
+      for (let i = state.cards.length - 1; i >= 0; i--) {
+        const c = state.cards[i];
+        if (c?.kind === "reasoning" && !c.aborted) {
+          foundReasoning = true;
+          cards = cards.with(i, {
+            ...c,
+            turnCostUsd: event.usage.inputCost + event.usage.reasonCost,
+            inputCostUsd: event.usage.inputCost,
+            reasonCostUsd: event.usage.reasonCost,
+          });
+          break;
+        }
+      }
+      // No ReasoningCard found (thinking off) — stamp inputCost on
+      // the UserCard so the user line shows the prompt-side cost.
+      if (!foundReasoning) {
+        for (let i = cards.length - 1; i >= 0; i--) {
+          const u = cards[i];
+          if (u?.kind === "user") {
+            cards = cards.with(i, { ...u, turnCostUsd: event.usage.inputCost });
+            break;
+          }
+        }
+      }
+      // NOTE: tool/subagent/task/search cards intentionally do NOT get the LLM
+      // API call cost.  The LLM cost is already split: context+reasoning →
+      // ReasoningCard, reply output → StreamingCard.  The per-call cost shown
+      // on tool cards would be the tool execution cost (platform fee), which is
+      // tracked elsewhere and not part of the turn.end event.
       return {
         ...state,
         turnInProgress: false,
+        roundCost,
         status: {
           ...state.status,
           cost: event.usage.cost,
@@ -110,6 +179,7 @@ export function reduce(state: AgentState, event: AgentEvent): AgentState {
           sessionOutputTokens,
           lastTurnMs: event.elapsedMs ?? state.status.lastTurnMs,
         },
+        cards,
       };
     }
 
@@ -439,16 +509,25 @@ function advanceActivePlanSteps(steps: ReadonlyArray<PlanStep>): PlanStep[] {
   });
 }
 
-function makeReasoningCard(id: string, model?: string): ReasoningCard {
+function makeReasoningCard(opts: {
+  id: string;
+  model?: string;
+  reasoningEffort?: import("../../../config.js").ReasoningEffort;
+  resolvedReasoningEffort?: "low" | "medium" | "high" | "max";
+}): ReasoningCard {
   return {
     kind: "reasoning",
-    id,
+    id: opts.id,
     ts: Date.now(),
     text: "",
     paragraphs: 0,
     tokens: 0,
     streaming: true,
-    ...(model ? { model } : {}),
+    ...(opts.model ? { model: opts.model } : {}),
+    ...(opts.reasoningEffort ? { reasoningEffort: opts.reasoningEffort } : {}),
+    ...(opts.resolvedReasoningEffort
+      ? { resolvedReasoningEffort: opts.resolvedReasoningEffort }
+      : {}),
   };
 }
 

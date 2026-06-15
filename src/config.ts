@@ -37,12 +37,20 @@ export const SUPPORTED_OFFICIAL_MODELS: readonly string[] = [
   "deepseek-v4-pro",
 ];
 
-export type ReasoningEffort = "low" | "medium" | "high" | "max";
+export type ReasoningEffort = "low" | "medium" | "high" | "max" | "auto";
 
-export const REASONING_EFFORT_VALUES: readonly ReasoningEffort[] = ["low", "medium", "high", "max"];
+export const REASONING_EFFORT_VALUES: readonly ReasoningEffort[] = [
+  "low",
+  "medium",
+  "high",
+  "max",
+  "auto",
+];
 
 export function isReasoningEffort(value: unknown): value is ReasoningEffort {
-  return value === "low" || value === "medium" || value === "high" || value === "max";
+  return (
+    value === "low" || value === "medium" || value === "high" || value === "max" || value === "auto"
+  );
 }
 
 export type EngineeringLifecycleMode = "off" | "strict";
@@ -1359,10 +1367,10 @@ export function mouseClipboardHintShown(path: string = defaultConfigPath()): boo
   return readConfig(path).mouseClipboardHintShown === true;
 }
 
-/** Unknown / missing fall back to "high" — the only value every OpenAI-compatible endpoint accepts (vLLM rejects "max"). */
+/** Unknown / missing fall back to "auto" — per-turn heuristic selects the actual level. */
 export function loadReasoningEffort(path: string = defaultConfigPath()): ReasoningEffort {
   const v = readConfig(path).reasoningEffort;
-  return isReasoningEffort(v) ? v : "high";
+  return isReasoningEffort(v) ? v : "auto";
 }
 
 export function loadTheme(path: string = defaultConfigPath()): ThemeName | "auto" | undefined {

@@ -5,17 +5,22 @@ import { t } from "../../../i18n/index.js";
 import { Card } from "../primitives/Card.js";
 import { CardHeader } from "../primitives/CardHeader.js";
 import type { SearchCard as SearchCardData, SearchHit } from "../state/cards.js";
-import { FG, TONE } from "../theme/tokens.js";
+import { FG, TONE, formatCost } from "../theme/tokens.js";
 
 export function SearchCard({ card }: { card: SearchCardData }): React.ReactElement {
   const fileCount = new Set(card.hits.map((h) => h.file)).size;
-  const elapsed = `${(card.elapsedMs / 1000).toFixed(2)}s`;
+  const elapsed = `${(card.elapsedMs / 1000).toFixed(2)}秒`;
   const stats = t(card.hits.length === 1 ? "cardLabels.hitSingular" : "cardLabels.hitsPlural", {
     count: card.hits.length,
     files: fileCount,
   });
 
   const grouped = groupByFile(card.hits.slice(0, 10));
+
+  const meta: import("../primitives/CardHeader.js").MetaItem[] = [stats, elapsed];
+  if (card.roundCostUsd !== undefined && card.roundCostUsd > 0) {
+    meta.push({ text: formatCost(card.roundCostUsd), color: TONE.warn, bold: true });
+  }
 
   return (
     <Card tone={TONE.info}>
@@ -24,7 +29,7 @@ export function SearchCard({ card }: { card: SearchCardData }): React.ReactEleme
         tone={TONE.info}
         title={t("cardTitles.search")}
         subtitle={`"${card.query}"`}
-        meta={[stats, elapsed]}
+        meta={meta}
       />
       {grouped.map(([file, hits]) => (
         <Box key={file} flexDirection="column">

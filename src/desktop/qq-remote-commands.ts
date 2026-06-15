@@ -5,7 +5,7 @@ export type QQRemoteDesktopCommand =
   | { kind: "compact" }
   | { kind: "retry" }
   | { kind: "model"; value?: string }
-  | { kind: "effort"; value?: "low" | "medium" | "high" | "max" }
+  | { kind: "effort"; value?: "low" | "medium" | "high" | "max" | "auto" }
   | { kind: "plan"; value?: "review" | "auto" | "yolo" }
   | { kind: "btw"; text: string }
   | { kind: "skill"; name: string; args?: string };
@@ -29,7 +29,7 @@ export function parseQQRemoteDesktopCommand(
     return { kind: "model", value: value || undefined };
   }
 
-  const effortMatch = /^\/effort(?:\s+(low|medium|high|max))?$/i.exec(trimmed);
+  const effortMatch = /^\/effort(?:\s+(auto|low|medium|high|max))?$/i.exec(trimmed);
   if (effortMatch) {
     const value = effortMatch[1]?.trim().toLowerCase() as
       | "low"
@@ -86,7 +86,7 @@ export function qqRemoteDesktopHelpText(skillNames: Iterable<string>): string {
     "- /compact",
     "- /retry",
     "- /model <flash|pro|deepseek-v4-flash|deepseek-v4-pro>",
-    "- /effort <low|medium|high|max>",
+    "- /effort <auto|low|medium|high|max>",
     "- /plan <review|auto|yolo>",
     "- /btw <question>",
     `${skillHint}`.trimEnd(),

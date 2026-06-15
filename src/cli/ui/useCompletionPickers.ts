@@ -583,15 +583,16 @@ function rankSearchHits(
   });
 }
 
-/** Drops `max` from the /effort spec's argsHint + argCompleter when the
- *  active endpoint is non-DeepSeek so vLLM/Azure users don't see an option
+/** Rewrite the /effort spec's argsHint + argCompleter to match the
+ *  filtered effort choices for the active endpoint, dropping "max"
+ *  on non-DeepSeek hosts so vLLM/Azure users don't see an option
  *  that would 400 their next call (#1794). No-op for any other command. */
 function rewriteEffortSpec(
   spec: SlashCommandSpec,
   effortChoices: readonly ReasoningEffort[],
 ): SlashCommandSpec {
   if (spec.cmd !== "effort") return spec;
-  if (effortChoices.length === 4) return spec;
+  if (effortChoices.length === 0) return spec;
   return {
     ...spec,
     argsHint: effortArgsHintFor(effortChoices),

@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { render } from "ink";
 import React, { useMemo, useState } from "react";
 import {
@@ -19,6 +20,7 @@ import {
   listSessionsForWorkspace,
   renameSession,
   resolveSession,
+  sessionPath,
 } from "../../memory/session.js";
 import { QQChannel } from "../../qq/channel.js";
 import { TelegramChannel } from "../../telegram/channel.js";
@@ -206,7 +208,14 @@ function Root({
               return;
             }
             if (outcome.kind === "new") {
-              setActiveSession(freshSessionName(activeSession));
+              const bare = activeSession
+                ?.replace(/__archive_\d{12,14}/, "")
+                .replace(/-\d{12,14}$/, "");
+              const target =
+                bare && activeSession && !existsSync(sessionPath(activeSession))
+                  ? bare
+                  : freshSessionName(activeSession);
+              setActiveSession(target);
               setPickerOpen(false);
               return;
             }

@@ -3,7 +3,7 @@ import React, { useContext } from "react";
 import { FG } from "../theme/tokens.js";
 import { ActiveCardContext } from "./Card.js";
 
-export type MetaItem = string | { text: string; color: Color };
+export type MetaItem = string | { text: string; color: Color; bold?: boolean };
 
 export interface CardHeaderProps {
   glyph: string | React.ReactElement;
@@ -42,7 +42,9 @@ export function CardHeader({
           // biome-ignore lint/suspicious/noArrayIndexKey: meta items are positional
           <React.Fragment key={`m-${i}`}>
             <Text color={FG.faint}>·</Text>
-            <Text color={color}>{text}</Text>
+            <Text color={color} bold={isStr ? undefined : item.bold}>
+              {text}
+            </Text>
           </React.Fragment>
         );
       })}

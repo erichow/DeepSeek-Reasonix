@@ -88,7 +88,7 @@ export async function handleSettings(
         apiKeySet: Boolean(cfg.apiKey),
         baseUrl: cfg.baseUrl ?? null,
         lang: getLanguage(),
-        reasoningEffort: isReasoningEffort(cfg.reasoningEffort) ? cfg.reasoningEffort : "high",
+        reasoningEffort: isReasoningEffort(cfg.reasoningEffort) ? cfg.reasoningEffort : "auto",
         search: cfg.search !== false,
         webSearchEngine: readWebSearchEngine(ctx.configPath),
         webSearchApiKeys: {

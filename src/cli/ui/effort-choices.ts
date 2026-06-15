@@ -1,8 +1,8 @@
 import type { ReasoningEffort } from "../../config.js";
 import { isDeepSeekHost } from "../../loop/errors.js";
 
-const ALL: readonly ReasoningEffort[] = ["low", "medium", "high", "max"];
-const STANDARD: readonly ReasoningEffort[] = ["low", "medium", "high"];
+const ALL: readonly ReasoningEffort[] = ["auto", "low", "medium", "high", "max"];
+const STANDARD: readonly ReasoningEffort[] = ["auto", "low", "medium", "high"];
 
 /** `max` is a DeepSeek-only reasoning extension; non-DeepSeek hosts 400 on it (#1794). */
 export function effortChoicesForBaseUrl(

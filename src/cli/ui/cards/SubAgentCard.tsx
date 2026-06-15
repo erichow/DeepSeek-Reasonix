@@ -13,7 +13,7 @@ import {
 } from "../primitives/Pulse.js";
 import type { Card, SubAgentCard as SubAgentCardData } from "../state/cards.js";
 import { useThemeTokens } from "../theme/context.js";
-import { CARD } from "../theme/tokens.js";
+import { CARD, FG, TONE, formatCost } from "../theme/tokens.js";
 
 export function SubAgentCard({ card }: { card: SubAgentCardData }): React.ReactElement {
   const { fg, tone, toneActive } = useThemeTokens();
@@ -32,6 +32,13 @@ export function SubAgentCard({ card }: { card: SubAgentCardData }): React.ReactE
       ? [`${runningChildren} ${t("cardLabels.runningLabel")}`]
       : [t("cardLabels.workingLabel")]
     : [{ text: card.status, color: headColor }];
+  if (card.roundCostUsd !== undefined && card.roundCostUsd > 0) {
+    (headerMeta as Array<string | { text: string; color: Color; bold?: boolean }>).push({
+      text: formatCost(card.roundCostUsd),
+      color: TONE.warn,
+      bold: true,
+    });
+  }
   return (
     <CardWrap tone={headColor}>
       <CardHeader
@@ -123,7 +130,7 @@ function childVisual(
       };
     }
     case "tool": {
-      const elapsed = card.elapsedMs > 0 ? ` · ${(card.elapsedMs / 1000).toFixed(2)}s` : "";
+      const elapsed = card.elapsedMs > 0 ? ` · ${(card.elapsedMs / 1000).toFixed(2)}秒` : "";
       return {
         statusGlyph: card.done ? doneGlyph(doneColor) : runningGlyph(CARD.tool.color, "tool"),
         kindGlyph: "●",

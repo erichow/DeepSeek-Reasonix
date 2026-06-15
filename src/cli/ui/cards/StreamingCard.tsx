@@ -2,15 +2,16 @@ import { Box, Text, useStdout } from "ink";
 import React, { useContext } from "react";
 import { t } from "../../../i18n/index.js";
 import { countTokensBounded } from "../../../tokenizer.js";
+import { useContentWidth } from "../content-width.js";
 import { LiveExpandContext } from "../layout/LiveExpandContext.js";
 import { Markdown } from "../markdown.js";
 import { Card } from "../primitives/Card.js";
 import { CardHeader } from "../primitives/CardHeader.js";
-import { Pill, modelBadgeFor, pillModel, pillPath } from "../primitives/Pill.js";
+import { Pill, modelBadgeFor, pillPath } from "../primitives/Pill.js";
 import { PULSE_CIRCLE, Pulse } from "../primitives/Pulse.js";
 import type { StreamingCard as StreamingCardData } from "../state/cards.js";
 import { clipToCells } from "../text-width.js";
-import { FG, TONE, TONE_ACTIVE } from "../theme/tokens.js";
+import { FG, TONE, TONE_ACTIVE, formatCost } from "../theme/tokens.js";
 import { useIncrementalWrap } from "./useIncrementalWrap.js";
 
 /** Streaming preview tail length — bounded live region so chunks don't thrash whole-card layout. */
@@ -95,15 +96,17 @@ const pillRate = pillPath;
 
 export function StreamingCard({ card }: { card: StreamingCardData }): React.ReactElement {
   const { stdout } = useStdout();
-  const cols = stdout?.columns ?? 80;
+  const cols = useContentWidth() || (stdout?.columns ?? 80);
   const expanded = useContext(LiveExpandContext);
   const liveRate = useLiveTokenRate(card, !card.done && !card.aborted);
   const lineCells = Math.max(20, cols - 4);
   const visualLines = useIncrementalWrap(card.text, lineCells);
 
   const modelBadge = card.model ? modelBadgeFor(card.model) : null;
-  const modelPill = modelBadge ? (
-    <Pill label={modelBadge.label} {...pillModel()[modelBadge.kind]} bold={false} />
+  const modelText = modelBadge ? (
+    <Text italic color={FG.sub}>
+      {modelBadge.label}
+    </Text>
   ) : null;
 
   if (card.done && !card.aborted) {
@@ -112,6 +115,60 @@ export function StreamingCard({ card }: { card: StreamingCardData }): React.Reac
       tokens >= MIN_TOKENS_FOR_RATE && tps !== null ? (
         <Pill label={`${formatTokenCount(tokens)} tok · ${tps} t/s`} {...pillRate()} bold={false} />
       ) : null;
+    const turnDurationPill =
+      card.turnDurationMs !== undefined && card.turnDurationMs > 0 ? (
+        <Text color={FG.sub}>{`${(card.turnDurationMs / 1000).toFixed(1)}秒`}</Text>
+      ) : null;
+    const turnCostText =
+      card.turnCostUsd !== undefined && card.turnCostUsd > 0 ? (
+        <Text bold color={TONE.warn}>
+          {formatCost(card.turnCostUsd)}
+        </Text>
+      ) : null;
+    const roundCostText =
+      card.roundCostUsd !== undefined && card.roundCostUsd > 0 ? (
+        <Text bold color={TONE.warn}>
+          {t("cardLabels.totalCost")} {formatCost(card.roundCostUsd)}
+        </Text>
+      ) : null;
+    const headerParts: React.ReactNode[] = [];
+    if (ratePill) headerParts.push(ratePill);
+    if (turnDurationPill) {
+      if (headerParts.length > 0)
+        headerParts.push(
+          <Text key="sd" color={FG.faint}>
+            ·
+          </Text>,
+        );
+      headerParts.push(turnDurationPill);
+    }
+    if (modelText) {
+      if (headerParts.length > 0)
+        headerParts.push(
+          <Text key="sm" color={FG.faint}>
+            ·
+          </Text>,
+        );
+      headerParts.push(modelText);
+    }
+    if (turnCostText) {
+      if (headerParts.length > 0)
+        headerParts.push(
+          <Text key="sc" color={FG.faint}>
+            ·
+          </Text>,
+        );
+      headerParts.push(turnCostText);
+    }
+    if (roundCostText) {
+      if (headerParts.length > 0)
+        headerParts.push(
+          <Text key="sr" color={FG.faint}>
+            ·
+          </Text>,
+        );
+      headerParts.push(roundCostText);
+    }
     return (
       <Card tone={TONE.ok}>
         <CardHeader
@@ -119,13 +176,14 @@ export function StreamingCard({ card }: { card: StreamingCardData }): React.Reac
           tone={TONE.ok}
           title={t("cardTitles.reply")}
           right={
-            <>
-              {ratePill}
-              {modelPill}
-            </>
+            headerParts.length > 0 ? (
+              <Box flexDirection="row" gap={1}>
+                {headerParts}
+              </Box>
+            ) : null
           }
         />
-        <Markdown text={card.text} />
+        <Markdown text={card.text} width={lineCells} />
       </Card>
     );
   }
@@ -150,6 +208,27 @@ export function StreamingCard({ card }: { card: StreamingCardData }): React.Reac
     <Pill label={expanded ? "expanded ⌃o" : "preview ⌃o"} {...pillRate()} bold={false} />
   ) : null;
 
+  const liveParts: React.ReactNode[] = [];
+  if (liveRatePill) liveParts.push(liveRatePill);
+  if (expandPill) {
+    if (liveParts.length > 0)
+      liveParts.push(
+        <Text key="sx" color={FG.faint}>
+          ·
+        </Text>,
+      );
+    liveParts.push(expandPill);
+  }
+  if (modelText) {
+    if (liveParts.length > 0)
+      liveParts.push(
+        <Text key="sm" color={FG.faint}>
+          ·
+        </Text>,
+      );
+    liveParts.push(modelText);
+  }
+
   return (
     <Card tone={headColor}>
       <CardHeader
@@ -157,11 +236,11 @@ export function StreamingCard({ card }: { card: StreamingCardData }): React.Reac
         tone={headColor}
         title={headLabel}
         right={
-          <>
-            {liveRatePill}
-            {expandPill}
-            {modelPill}
-          </>
+          liveParts.length > 0 ? (
+            <Box flexDirection="row" gap={1}>
+              {liveParts}
+            </Box>
+          ) : null
         }
       />
       {expanded && droppedAbove > 0 ? (

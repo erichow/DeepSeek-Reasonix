@@ -8,6 +8,8 @@ export interface CardBase {
 export interface UserCard extends CardBase {
   readonly kind: "user";
   readonly text: string;
+  /** Prompt-side (input) cost stamped at turn.end — system prompt + tools + history + user question. */
+  turnCostUsd?: number;
 }
 
 export interface ReasoningCard extends CardBase {
@@ -21,6 +23,16 @@ export interface ReasoningCard extends CardBase {
   model?: string;
   /** Stamped at reasoning.end. Drives the duration badge on the settled header. */
   endedAt?: number;
+  /** Per-turn USD cost, stamped at turn.end. */
+  turnCostUsd?: number;
+  /** Prompt-side (context/cache) USD cost, stamped at turn.end. */
+  inputCostUsd?: number;
+  /** Reasoning output USD cost, stamped at turn.end. */
+  reasonCostUsd?: number;
+  /** User-configured reasoning effort at start time (e.g. "auto"). */
+  reasoningEffort?: import("../../../config.js").ReasoningEffort;
+  /** Resolved reasoning effort for this turn (always concrete — "auto" resolved to "low"|"medium"|"high"|"max"). */
+  resolvedReasoningEffort?: "low" | "medium" | "high" | "max";
 }
 
 export interface StreamingCard extends CardBase {
@@ -32,6 +44,22 @@ export interface StreamingCard extends CardBase {
   model?: string;
   /** Stamped at streaming.end. */
   endedAt?: number;
+  /** Per-turn USD cost, stamped at turn.end. */
+  turnCostUsd?: number;
+  /** Round-total USD cost (this user-question round, across multi-iter tool call chains), stamped at turn.end. */
+  roundCostUsd?: number;
+  /** Per-turn wall-clock duration (ms), stamped at turn.end. */
+  turnDurationMs?: number;
+  /** Total prompt tokens this turn. */
+  turnPromptTokens?: number;
+  /** Cache-hit prompt tokens this turn. */
+  turnCacheHitTokens?: number;
+  /** Cache-miss (new) prompt tokens this turn. */
+  turnCacheMissTokens?: number;
+  /** Total completion tokens this turn. */
+  turnCompletionTokens?: number;
+  /** Reasoning tokens within completion. */
+  turnReasoningTokens?: number;
 }
 
 export interface ToolCard extends CardBase {
@@ -46,6 +74,8 @@ export interface ToolCard extends CardBase {
   aborted?: boolean;
   /** Set when dispatch refused the call (e.g. plan-mode bounce). UI swaps spinner for a red "rejected" badge and hides the verbose error body. */
   rejected?: boolean;
+  /** Per-API-call USD cost (the API call that invoked this tool), stamped at turn.end. */
+  roundCostUsd?: number;
 }
 
 export interface TaskStep {
@@ -65,6 +95,8 @@ export interface TaskCard extends CardBase {
   steps: TaskStep[];
   status: "running" | "done" | "failed";
   elapsedMs: number;
+  /** Per-API-call USD cost (the API call that produced this task), stamped at turn.end. */
+  roundCostUsd?: number;
 }
 
 export interface PlanStep {
@@ -143,6 +175,8 @@ export interface SubAgentCard extends CardBase {
   children: Card[];
   /** Tool names the subagent has access to — surfaced as a "Tools  ..." row in the header block. */
   tools?: ReadonlyArray<string>;
+  /** Per-API-call USD cost (the API call that produced this subagent run), stamped at turn.end. */
+  roundCostUsd?: number;
 }
 
 export interface SearchHit {
@@ -158,6 +192,8 @@ export interface SearchCard extends CardBase {
   readonly query: string;
   readonly hits: ReadonlyArray<SearchHit>;
   readonly elapsedMs: number;
+  /** Per-API-call USD cost (the API call that produced this search), stamped at turn.end. */
+  roundCostUsd?: number;
 }
 
 export type LiveKind =

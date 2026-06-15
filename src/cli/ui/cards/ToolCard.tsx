@@ -2,6 +2,7 @@ import { Box, type Color, Text, useStdout } from "ink";
 import React from "react";
 import { type DiffDisplay, loadDiffDisplay } from "../../../config.js";
 import { t } from "../../../i18n/index.js";
+import { useContentWidth } from "../content-width.js";
 import { Markdown } from "../markdown.js";
 import { Card } from "../primitives/Card.js";
 import { CardHeader, type MetaItem } from "../primitives/CardHeader.js";
@@ -10,7 +11,7 @@ import type { ToolCard as ToolCardData } from "../state/cards.js";
 import { useIsInflight } from "../state/inflight-context.js";
 import { VerboseContext } from "../state/verbose-context.js";
 import { clipToCells } from "../text-width.js";
-import { FG, TONE, TONE_ACTIVE } from "../theme/tokens.js";
+import { FG, TONE, TONE_ACTIVE, formatCost } from "../theme/tokens.js";
 import { selectToolPreviewLines } from "../tool-summary.js";
 
 const READ_TAIL = 2;
@@ -73,7 +74,7 @@ function tailLinesFor(name: string): number {
 
 export function ToolCard({ card }: { card: ToolCardData }): React.ReactElement {
   const { stdout } = useStdout();
-  const cols = stdout?.columns ?? 80;
+  const cols = useContentWidth() || (stdout?.columns ?? 80);
   const lineCells = Math.max(20, cols - 4);
   const argsLabel = formatArgsSummary(card.args);
 
@@ -124,6 +125,9 @@ export function ToolCard({ card }: { card: ToolCardData }): React.ReactElement {
     meta.push({ text: `-${dels}`, color: TONE.err });
   }
   for (const part of metaTrail(card)) meta.push(part);
+  if (card.roundCostUsd !== undefined && card.roundCostUsd > 0) {
+    meta.push({ text: formatCost(card.roundCostUsd), color: TONE.warn, bold: true });
+  }
 
   const headerGlyph =
     status === "running" ? (

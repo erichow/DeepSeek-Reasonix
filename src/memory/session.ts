@@ -121,7 +121,12 @@ export function timestampSuffix(): string {
 
 /** Unique name for an in-app "new session" — strips a trailing 12/14-digit timestamp from the current name and re-stamps with seconds precision so back-to-back clicks don't collide. */
 export function freshSessionName(currentName: string | undefined): string {
-  const base = currentName ? currentName.replace(/-\d{12,14}$/, "") : "default";
+  // Strip any `__archive_<ts>` infix (left over from resuming an archived
+  // session via the SessionPicker) and any trailing `-<ts>` suffix so the
+  // new session gets a clean base name.
+  const base = currentName
+    ? currentName.replace(/__archive_\d{12,14}/, "").replace(/-\d{12,14}$/, "")
+    : "default";
   const stamp = new Date().toISOString().replace(/[^\d]/g, "").slice(0, 14);
   return `${base || "default"}-${stamp}`;
 }

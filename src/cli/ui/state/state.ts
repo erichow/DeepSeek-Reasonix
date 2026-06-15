@@ -75,6 +75,8 @@ export interface AgentState {
   readonly focusedCardId: CardId | null;
   readonly toasts: ReadonlyArray<Toast>;
   readonly turnInProgress: boolean;
+  /** Accumulated USD cost for the current user-question round (across multi-iter tool call chains). Reset on user.submit. */
+  readonly roundCost: number;
 }
 
 export function initialState(session: SessionInfo, cards: ReadonlyArray<Card> = []): AgentState {
@@ -106,5 +108,6 @@ export function initialState(session: SessionInfo, cards: ReadonlyArray<Card> = 
     focusedCardId: null,
     toasts: [],
     turnInProgress: false,
+    roundCost: 0,
   };
 }

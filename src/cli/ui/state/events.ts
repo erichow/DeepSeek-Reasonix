@@ -21,6 +21,7 @@ const reasoningStart = z.object({
   type: z.literal("reasoning.start"),
   id: cardId,
   model: z.string().min(1).optional(),
+  resolvedEffort: z.enum(["low", "medium", "high", "max"]).optional(),
 });
 
 const reasoningChunk = z.object({
@@ -96,6 +97,8 @@ const turnEnd = z.object({
     output: z.number().int().nonnegative(),
     cacheHit: z.number().min(0).max(1),
     cost: z.number().nonnegative(),
+    inputCost: z.number().nonnegative(),
+    reasonCost: z.number().nonnegative(),
   }),
   /** Model context window — drives the prompt-bar denominator on the auto-emitted UsageCard. */
   promptCap: z.number().int().positive().optional(),
@@ -134,7 +137,7 @@ const sessionModelChange = z.object({
 
 const sessionEffortChange = z.object({
   type: z.literal("session.effort.change"),
-  reasoningEffort: z.enum(["low", "medium", "high", "max"]),
+  reasoningEffort: z.enum(["auto", "low", "medium", "high", "max"]),
 });
 
 const sessionThinkingChange = z.object({

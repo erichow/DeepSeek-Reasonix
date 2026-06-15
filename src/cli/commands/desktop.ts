@@ -1745,7 +1745,7 @@ export async function desktopCommand(opts: DesktopOptions): Promise<void> {
       case "effort":
         if (!cmd.value) {
           sendQQInfo(
-            `Current reasoning effort: ${loadReasoningEffort()}. Use /effort low, /effort medium, /effort high, or /effort max.`,
+            `Current reasoning effort: ${loadReasoningEffort()}. Use /effort auto, /effort low, /effort medium, /effort high, or /effort max.`,
             tab,
           );
           return true;

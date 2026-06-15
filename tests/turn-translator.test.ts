@@ -160,6 +160,8 @@ describe("TurnTranslator", () => {
       output: 50,
       cacheHit: 0.91,
       cost: 0.0014,
+      inputCost: 0,
+      reasonCost: 0,
     });
   });
 

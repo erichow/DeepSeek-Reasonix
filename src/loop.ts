@@ -234,7 +234,7 @@ export class CacheFirstLoop {
       sessionPath: this.sessionName ? sessionPath(this.sessionName) : undefined,
     });
     this.model = opts.model ?? "deepseek-v4-flash";
-    this.reasoningEffort = opts.reasoningEffort ?? "high";
+    this.reasoningEffort = opts.reasoningEffort ?? "auto";
     this.thinkingOverride = opts.thinkingOverride;
     this.maxOutputTokens = opts.maxOutputTokens;
     this.budgetUsd =
@@ -368,15 +368,20 @@ export class CacheFirstLoop {
     }
   }
 
-  /** "New chat" — drops in-memory messages, archives the on-disk transcript so it survives in Sessions, keeps sessionName so the prefix cache stays warm. Re-runs the system-prompt builder if one was wired (issue #778: REASONIX.md edits otherwise need a restart). */
-  clearLog(): { dropped: number; archived: string | null; systemRebuilt: boolean } {
+  /** "New chat" — drops in-memory messages, archives the on-disk transcript so it survives in Sessions, keeps sessionName so the prefix cache stays warm. Re-runs the system-prompt builder if one was wired (issue #778: REASONIX.md edits otherwise need a restart).
+   * When `archive` is `false` the session file is rewritten in place (no archival) — used by `/clear`. */
+  clearLog(archive = true): { dropped: number; archived: string | null; systemRebuilt: boolean } {
     const dropped = this.log.length;
     this.log.compactInPlace([]);
     let archived: string | null = null;
     if (this.sessionName) {
       try {
-        archived = archiveSession(this.sessionName);
-        if (archived === null) rewriteSession(this.sessionName, []);
+        if (archive) {
+          archived = archiveSession(this.sessionName);
+          if (archived === null) rewriteSession(this.sessionName, []);
+        } else {
+          rewriteSession(this.sessionName, []);
+        }
       } catch {
         /* disk issue shouldn't block the in-memory clear */
       }
@@ -682,6 +687,56 @@ export class CacheFirstLoop {
     return userText;
   }
 
+  /**
+   * Resolve the concrete reasoning effort for the current turn.
+   *
+   * Returns the stored value when it's a concrete level (low/medium/high/max).
+   * When set to "auto", applies a per-turn heuristic:
+   *
+   *   iter 0 (first API call):
+   *     - Pure chat, short input  (< 80 chars)  → low
+   *     - Pure chat, medium input (< 300 chars)  → medium
+   *     - Pure chat, long input   (≥ 300 chars)  → high
+   *     - Tools available, short input  (< 80)   → low
+   *     - Tools available, medium input (< 300)  → medium
+   *     - Tools available, long input  (≥ 300)   → high
+   *
+   *   iter > 0 (tool-result processing):
+   *     - Self-correction / repair  → max
+   *     - Normal tool iteration     → medium (high for long sessions)
+   */
+  private _resolveEffort(
+    iter: number,
+    userInput: string,
+    toolSpecsCount: number,
+  ): "low" | "medium" | "high" | "max" {
+    if (this.reasoningEffort !== "auto") {
+      return this.reasoningEffort as "low" | "medium" | "high" | "max";
+    }
+
+    // ── iter > 0: tool-result processing ──
+    if (iter > 0) {
+      // Repair mode: go all-in to fix correctly in one shot.
+      if (this._turnSelfCorrected) return "max";
+      // Normal tool-result iteration: short sessions digest quickly;
+      // long sessions have more context to reason through.
+      return this.log.length > 50 ? "high" : "medium";
+    }
+
+    // ── iter === 0: first API call of the turn ──
+    if (toolSpecsCount === 0) {
+      // Pure chat — no tools involved, just a Q&A.
+      if (userInput.length < 80) return "low";
+      if (userInput.length < 300) return "medium";
+      return "high";
+    }
+
+    // Tools available — likely a working task.
+    if (userInput.length < 80) return "low";
+    if (userInput.length < 300) return "medium";
+    return "high";
+  }
+
   async *step(userInput: string): AsyncGenerator<LoopEvent> {
     // Reset per-turn flags.
     this._steerConsumed = false;
@@ -894,6 +949,7 @@ export class CacheFirstLoop {
       let toolCalls: ToolCall[] = [];
       let usage: TurnStats["usage"] | null = null;
       let callModel = this.model;
+      let iterResolvedEffort: "low" | "medium" | "high" | "max" = "medium";
 
       // Snapshot prefix evidence from the same turn-start tool list sent
       // to the API so MCP hot-adds during the turn don't rewrite history.
@@ -901,6 +957,7 @@ export class CacheFirstLoop {
 
       try {
         callModel = this.model;
+        iterResolvedEffort = this._resolveEffort(iter, userInput, toolSpecs.length);
         if (this.stream) {
           const result = yield* streamModelResponse({
             client: this.client,
@@ -908,7 +965,7 @@ export class CacheFirstLoop {
             messages,
             toolSpecs,
             signal,
-            reasoningEffort: this.reasoningEffort,
+            reasoningEffort: iterResolvedEffort,
             thinkingOverride: this.thinkingOverride,
             maxTokens: this.maxOutputTokens,
             turn: this._turn,
@@ -924,7 +981,7 @@ export class CacheFirstLoop {
             tools: toolSpecs.length ? toolSpecs : undefined,
             signal,
             thinking: this.thinkingOverride ?? thinkingModeForModel(callModel),
-            reasoningEffort: this.reasoningEffort,
+            reasoningEffort: iterResolvedEffort,
             maxTokens: this.maxOutputTokens,
           });
           assistantContent = resp.content;
@@ -1052,6 +1109,7 @@ export class CacheFirstLoop {
         stats: turnStats,
         cacheDiagnostic,
         repair: report,
+        resolvedEffort: iterResolvedEffort,
       };
 
       const allSuppressed =

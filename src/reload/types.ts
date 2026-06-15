@@ -1,6 +1,8 @@
 /** Persisted to `.reasonix/reload-snapshot.json`. Records known-good state so
  *  `/reload` can detect what's changed since the last reload.
  *  `null` fields mean "not yet established" — first run baseline. */
+import type { ReasoningEffort } from "../config.js";
+
 export interface Snapshot {
   version: 1;
   /** mtime + sha256 hash of config.json. `null` before first reload. */
@@ -78,13 +80,13 @@ export interface ReloadContext {
   loop: {
     model: string;
     stream: boolean;
-    reasoningEffort: string;
+    reasoningEffort: ReasoningEffort;
     maxOutputTokens: number | undefined;
     budgetUsd: number | null;
     configure: (opts: {
       model?: string;
       stream?: boolean;
-      reasoningEffort?: string;
+      reasoningEffort?: ReasoningEffort;
       maxOutputTokens?: number;
     }) => void;
     setBudget: (usd: number | null) => void;

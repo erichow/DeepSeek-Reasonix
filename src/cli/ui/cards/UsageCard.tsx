@@ -3,7 +3,7 @@ import { Box, type Color, Text } from "ink";
 import React from "react";
 import { t } from "../../../i18n/index.js";
 import { Card } from "../primitives/Card.js";
-import { CardHeader } from "../primitives/CardHeader.js";
+import { CardHeader, type MetaItem } from "../primitives/CardHeader.js";
 import type { UsageCard as UsageCardData } from "../state/cards.js";
 import { useAgentState } from "../state/provider.js";
 import { FG, TONE, formatBalance, formatCost } from "../theme/tokens.js";
@@ -38,11 +38,11 @@ export function UsageCard({ card }: { card: UsageCardData }): React.ReactElement
   const reasonRatio = card.tokens.reason / cap;
   const outputRatio = card.tokens.output / cap;
 
-  const headerMeta: string[] = [
+  const headerMeta: MetaItem[] = [
     `${t("cardLabels.turn")} ${card.turn}`,
-    formatCost(card.cost, costCur),
+    { text: formatCost(card.cost, costCur), color: TONE.warn, bold: true },
   ];
-  if (card.elapsedMs !== undefined) headerMeta.push(`${(card.elapsedMs / 1000).toFixed(1)}s`);
+  if (card.elapsedMs !== undefined) headerMeta.push(`${(card.elapsedMs / 1000).toFixed(1)}秒`);
   return (
     <Card tone={FG.meta}>
       <CardHeader glyph="Σ" tone={FG.meta} title={t("cardTitles.usage")} meta={headerMeta} />
@@ -95,7 +95,7 @@ function CompactUsageRow({
   card,
   displayCurrency,
 }: { card: UsageCardData; displayCurrency?: string }): React.ReactElement {
-  const elapsed = card.elapsedMs !== undefined ? ` · ${(card.elapsedMs / 1000).toFixed(1)}s` : "";
+  const elapsed = card.elapsedMs !== undefined ? ` · ${(card.elapsedMs / 1000).toFixed(1)}秒` : "";
   return (
     <Box flexDirection="row" gap={1} marginTop={1}>
       <Text color={FG.meta}>Σ</Text>
@@ -105,7 +105,8 @@ function CompactUsageRow({
       </Text>
       <Text color={FG.faint}>{`· ${t("cardLabels.cache")}`}</Text>
       <Text color={TONE.ok}>{`${(card.cacheHit * 100).toFixed(0)}%`}</Text>
-      <Text color={FG.faint}>{`· ${formatCost(card.cost, displayCurrency)}${elapsed}`}</Text>
+      <Text bold color={TONE.warn}>{`· ${formatCost(card.cost, displayCurrency)}`}</Text>
+      {elapsed ? <Text color={FG.faint}>{elapsed}</Text> : null}
       {card.balance !== undefined ? (
         <Text color={TONE.brand}>{`· ${formatBalance(card.balance, card.balanceCurrency)}`}</Text>
       ) : null}

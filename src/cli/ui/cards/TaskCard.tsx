@@ -8,6 +8,7 @@ import { Pill, pillPath } from "../primitives/Pill.js";
 import { PULSE_TRIANGLE, Pulse } from "../primitives/Pulse.js";
 import type { TaskCard as TaskCardData, TaskStep } from "../state/cards.js";
 import { useThemeTokens } from "../theme/context.js";
+import { FG, TONE, formatCost } from "../theme/tokens.js";
 
 const STEP_GLYPH: Record<TaskStep["status"], string> = {
   queued: "○",
@@ -35,7 +36,11 @@ export function TaskCard({ card }: { card: TaskCardData }): React.ReactElement {
     done: tone.ok,
     failed: tone.err,
   };
-  const elapsed = `${(card.elapsedMs / 1000).toFixed(1)}s`;
+  const elapsed = `${(card.elapsedMs / 1000).toFixed(1)}秒`;
+  const meta: import("../primitives/CardHeader.js").MetaItem[] = [elapsed, card.status];
+  if (card.roundCostUsd !== undefined && card.roundCostUsd > 0) {
+    meta.push({ text: formatCost(card.roundCostUsd), color: TONE.warn, bold: true });
+  }
   return (
     <Card tone={taskColor[card.status]}>
       <CardHeader
@@ -49,7 +54,7 @@ export function TaskCard({ card }: { card: TaskCardData }): React.ReactElement {
         tone={taskColor[card.status]}
         title={t("cardTitles.task")}
         subtitle={`${card.index} / ${card.total}  ${card.title}`}
-        meta={[elapsed, card.status]}
+        meta={meta}
       />
       {card.steps.map((step) => (
         <Box key={step.id} flexDirection="row" gap={1}>
@@ -64,7 +69,7 @@ export function TaskCard({ card }: { card: TaskCardData }): React.ReactElement {
           <Pill label={step.title} {...pillPath()} bold={false} />
           {step.detail ? <Text color={fg.faint}>{step.detail}</Text> : null}
           {step.elapsedMs !== undefined ? (
-            <Text color={fg.faint}>{`${(step.elapsedMs / 1000).toFixed(2)}s`}</Text>
+            <Text color={fg.faint}>{`${(step.elapsedMs / 1000).toFixed(2)}秒`}</Text>
           ) : null}
         </Box>
       ))}

@@ -60,6 +60,7 @@ export async function* streamModelResponse(
         role: "assistant_delta",
         content: "",
         reasoningDelta: chunk.reasoningDelta,
+        resolvedEffort: reasoningEffort as "low" | "medium" | "high" | "max",
       };
     }
     if (chunk.contentDelta) {
