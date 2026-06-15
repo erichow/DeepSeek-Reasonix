@@ -32,7 +32,7 @@ const CTX_BAR_CELLS = 8;
 const DEFAULT_STATUS_BAR_CONFIG: StatusBarConfig = {
   showBalance: true,
   showSessionCost: true,
-  showTurnCost: true,
+  showTurnCost: false,
   showCacheHit: true,
   showCtxUsage: true,
   showVersion: true,

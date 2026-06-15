@@ -415,7 +415,7 @@ export function App(props: AppProps): React.ReactElement {
     return {
       showBalance: cfg.showBalance !== false,
       showSessionCost: cfg.showSessionCost !== false,
-      showTurnCost: cfg.showTurnCost !== false,
+      showTurnCost: cfg.showTurnCost === true,
       showCacheHit: cfg.showCacheHit !== false,
       showCtxUsage: cfg.showCtxUsage !== false,
       showVersion: cfg.showVersion !== false,
