@@ -126,7 +126,11 @@ export function ToolCard({ card }: { card: ToolCardData }): React.ReactElement {
   }
   for (const part of metaTrail(card)) meta.push(part);
   if (card.roundCostUsd !== undefined && card.roundCostUsd > 0) {
-    meta.push({ text: formatCost(card.roundCostUsd), color: TONE.warn, bold: true });
+    meta.push({
+      text: formatCost(card.roundCostUsd, undefined, 4, "fen"),
+      color: TONE.warn,
+      bold: true,
+    });
   }
 
   const headerGlyph =

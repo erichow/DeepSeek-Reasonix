@@ -19,7 +19,11 @@ export function SearchCard({ card }: { card: SearchCardData }): React.ReactEleme
 
   const meta: import("../primitives/CardHeader.js").MetaItem[] = [stats, elapsed];
   if (card.roundCostUsd !== undefined && card.roundCostUsd > 0) {
-    meta.push({ text: formatCost(card.roundCostUsd), color: TONE.warn, bold: true });
+    meta.push({
+      text: formatCost(card.roundCostUsd, undefined, 4, "fen"),
+      color: TONE.warn,
+      bold: true,
+    });
   }
 
   return (

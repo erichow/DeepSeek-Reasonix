@@ -39,7 +39,11 @@ export function TaskCard({ card }: { card: TaskCardData }): React.ReactElement {
   const elapsed = `${(card.elapsedMs / 1000).toFixed(1)}秒`;
   const meta: import("../primitives/CardHeader.js").MetaItem[] = [elapsed, card.status];
   if (card.roundCostUsd !== undefined && card.roundCostUsd > 0) {
-    meta.push({ text: formatCost(card.roundCostUsd), color: TONE.warn, bold: true });
+    meta.push({
+      text: formatCost(card.roundCostUsd, undefined, 4, "fen"),
+      color: TONE.warn,
+      bold: true,
+    });
   }
   return (
     <Card tone={taskColor[card.status]}>

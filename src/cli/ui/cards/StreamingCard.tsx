@@ -122,15 +122,10 @@ export function StreamingCard({ card }: { card: StreamingCardData }): React.Reac
     const turnCostText =
       card.turnCostUsd !== undefined && card.turnCostUsd > 0 ? (
         <Text bold color={TONE.warn}>
-          {formatCost(card.turnCostUsd)}
+          {formatCost(card.turnCostUsd, undefined, 4, "fen")}
         </Text>
       ) : null;
-    const roundCostText =
-      card.roundCostUsd !== undefined && card.roundCostUsd > 0 ? (
-        <Text bold color={TONE.warn}>
-          {t("cardLabels.totalCost")} {formatCost(card.roundCostUsd)}
-        </Text>
-      ) : null;
+
     const headerParts: React.ReactNode[] = [];
     if (ratePill) headerParts.push(ratePill);
     if (turnDurationPill) {
@@ -160,15 +155,7 @@ export function StreamingCard({ card }: { card: StreamingCardData }): React.Reac
         );
       headerParts.push(turnCostText);
     }
-    if (roundCostText) {
-      if (headerParts.length > 0)
-        headerParts.push(
-          <Text key="sr" color={FG.faint}>
-            ·
-          </Text>,
-        );
-      headerParts.push(roundCostText);
-    }
+
     return (
       <Card tone={TONE.ok}>
         <CardHeader

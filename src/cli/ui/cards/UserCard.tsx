@@ -10,7 +10,11 @@ import { formatRelativeTime } from "./time.js";
 export function UserCard({ card }: { card: UserCardData }): React.ReactElement {
   const meta: MetaItem[] = [formatRelativeTime(card.ts)];
   if (card.turnCostUsd !== undefined && card.turnCostUsd > 0) {
-    meta.push({ text: formatCost(card.turnCostUsd), color: TONE.warn, bold: true });
+    meta.push({
+      text: formatCost(card.turnCostUsd, undefined, 4, "fen"),
+      color: TONE.warn,
+      bold: true,
+    });
   }
   return (
     <Box flexDirection="column" width="100%" paddingX={1} backgroundColor={MESSAGE_BG.user}>

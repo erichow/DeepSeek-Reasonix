@@ -34,7 +34,7 @@ export function SubAgentCard({ card }: { card: SubAgentCardData }): React.ReactE
     : [{ text: card.status, color: headColor }];
   if (card.roundCostUsd !== undefined && card.roundCostUsd > 0) {
     (headerMeta as Array<string | { text: string; color: Color; bold?: boolean }>).push({
-      text: formatCost(card.roundCostUsd),
+      text: formatCost(card.roundCostUsd, undefined, 4, "fen"),
       color: TONE.warn,
       bold: true,
     });

@@ -635,12 +635,20 @@ export const USD_TO_CNY = 7.2;
 const SYMBOL: Record<string, string> = { USD: "$", CNY: "¥" };
 
 /** Format an amount already in `currency`. Undefined currency → CNY (matches pre-fix behavior). */
+/** Format an amount already in `currency`. Undefined currency → CNY (matches pre-fix behavior). */
 export function formatBalance(
   amount: number,
   currency?: string,
-  opts?: { fractionDigits?: number; label?: boolean },
+  opts?: { fractionDigits?: number; label?: boolean; unit?: "fen" },
 ): string {
   const cur = currency ?? "CNY";
+  // Fen display: convert to 分 and suffix instead of prefixing ¥.
+  if (opts?.unit === "fen" && cur === "CNY") {
+    const fen = amount * 100;
+    // 分已经是子单位，最多保留 2 位小数（厘级精度）
+    const digits = Math.min(opts.fractionDigits ?? 2, 2);
+    return `${fen.toFixed(digits)}分`;
+  }
   const sym = SYMBOL[cur];
   const digits = opts?.fractionDigits ?? 2;
   const body = sym ? `${sym}${amount.toFixed(digits)}` : `${cur} ${amount.toFixed(digits)}`;
@@ -648,10 +656,15 @@ export function formatBalance(
 }
 
 /** Format an internal USD cost in the wallet's display currency. Undefined currency → CNY. */
-export function formatCost(costUsd: number, currency?: string, fractionDigits = 4): string {
+export function formatCost(
+  costUsd: number,
+  currency?: string,
+  fractionDigits = 4,
+  unit?: "fen",
+): string {
   const cur = currency ?? "CNY";
   const amount = cur === "CNY" ? costUsd * USD_TO_CNY : costUsd;
-  return formatBalance(amount, cur, { fractionDigits });
+  return formatBalance(amount, cur, { fractionDigits, unit });
 }
 
 /** Threshold color for a wallet balance. USD is converted to CNY before the threshold check. */
