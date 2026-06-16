@@ -105,7 +105,7 @@ export function StatusRow({
             <Gap />
             <Pill>
               <Text bold color={TONE.warn}>
-                {`· ⛁ ${formatCost(status.sessionCost, status.costDisplayCurrency ?? status.balanceCurrency)} ${t("statusBar.spent")}`}
+                {`· ⛁ ${formatCost(status.sessionCost, status.costDisplayCurrency ?? status.balanceCurrency, 4, "fen")}`}
               </Text>
             </Pill>
           </>
