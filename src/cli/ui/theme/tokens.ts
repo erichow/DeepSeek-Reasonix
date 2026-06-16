@@ -1,5 +1,4 @@
 import type { Color } from "ink";
-import { getLanguage } from "../../../i18n/index.js";
 
 export type PublicThemeName =
   | "graphite"
@@ -646,7 +645,7 @@ export function formatBalance(
   if (opts?.unit === "fen" && cur === "CNY") {
     const fen = amount * 100;
     const digits = Math.min(opts.fractionDigits ?? 2, 2);
-    return `${getLanguage() === "zh-CN" ? "分" : "¢"}${fen.toFixed(digits)}`;
+    return `¢${fen.toFixed(digits)}`;
   }
   const sym = SYMBOL[cur];
   const digits = opts?.fractionDigits ?? 2;
