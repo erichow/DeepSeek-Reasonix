@@ -115,11 +115,11 @@ function ReasoningHeader({
         <>
           <Text color={FG.faint}>·</Text>
           <Text bold color={TONE.warn}>
-            {t("cardLabels.input")} {formatCost(card.inputCostUsd!, undefined, 4, "fen")}
+            {formatCost(card.inputCostUsd!, undefined, 4, "fen")}
           </Text>
           <Text color={FG.faint}>·</Text>
           <Text bold color={TONE.warn}>
-            {t("cardLabels.output")} {formatCost(card.reasonCostUsd!, undefined, 4, "fen")}
+            {formatCost(card.reasonCostUsd!, undefined, 4, "fen")}
           </Text>
         </>
       ) : null}
